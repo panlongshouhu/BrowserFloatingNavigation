@@ -1,0 +1,65 @@
+{
+  "manifest_version": 3,
+  "name": "悬浮导航",
+  "version": "1.0.0",
+  "description": "仿手机悬浮导航的浏览器快捷操作工具",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "tabs",
+    "bookmarks",
+    "history",
+    "notifications",
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "css": ["styles.css"],
+      "run_at": "document_end"
+    }
+  ],
+  "options_page": "options.html",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "悬浮导航设置"
+  },
+  "commands": {
+    "toggle-navigation": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+F"
+      },
+      "description": "切换悬浮导航显示/隐藏"
+    },
+    "scroll-to-top": {
+      "suggested_key": {
+        "default": "Ctrl+Home"
+      },
+      "description": "快速滚动到页面顶部"
+    },
+    "scroll-to-bottom": {
+      "suggested_key": {
+        "default": "Ctrl+End"
+      },
+      "description": "快速滚动到页面底部"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["icons/*", "themes/*"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

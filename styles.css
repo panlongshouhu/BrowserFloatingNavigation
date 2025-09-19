@@ -1,0 +1,404 @@
+/* 悬浮导航样式 */
+#floating-navigation {
+  position: fixed;
+  z-index: 999999;
+  user-select: none;
+  pointer-events: auto;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* 主按钮容器 */
+.floating-nav-container {
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* 主按钮 */
+.floating-nav-button {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease, filter 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.floating-nav-button:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  filter: brightness(1.1);
+}
+
+.floating-nav-button.main {
+  width: 56px;
+  height: 56px;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+/* 按钮图标 */
+.button-icon {
+  font-size: 18px;
+  line-height: 1;
+  z-index: 2;
+  font-weight: bold;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.floating-nav-button:hover .button-icon {
+  /* 移除图标缩放，避免位置变化 */
+}
+
+.floating-nav-button.main .button-icon {
+  font-size: 26px;
+  font-weight: 900;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+/* 按钮标签 */
+.button-label {
+  position: absolute;
+  left: 60px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 3;
+}
+
+.floating-nav-button:hover .button-label {
+  opacity: 1;
+}
+
+/* 按钮组容器 */
+.floating-nav-buttons {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 200px;
+  height: 200px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  border-radius: 50%;
+  /* 添加中心圆环指示 */
+  border: 2px dashed rgba(255, 255, 255, 0.3);
+  transition: border-color 0.3s ease;
+}
+
+.floating-nav-container.expanded .floating-nav-buttons {
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+.floating-nav-buttons .floating-nav-button {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  opacity: 0;
+  transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55), opacity 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  pointer-events: auto;
+}
+
+.floating-nav-buttons .floating-nav-button.show {
+  transform: translate(-50%, -50%) translate(var(--x, 0), var(--y, 0)) scale(1);
+  opacity: 1;
+}
+
+/* 展开状态 */
+.floating-nav-container.expanded .floating-nav-button.main {
+  transform: rotate(45deg);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3), 0 8px 35px rgba(6, 182, 212, 0.6);
+}
+
+.floating-nav-container.expanded::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  animation: pulse-center 2s ease-in-out infinite;
+}
+
+@keyframes pulse-center {
+  0%, 100% { 
+    opacity: 0.8;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% { 
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.3);
+  }
+}
+
+/* 默认主题 - 优化对比度 */
+.theme-default .floating-nav-button {
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 4px 20px rgba(79, 70, 229, 0.4);
+}
+
+.theme-default .floating-nav-button:hover {
+  background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
+  border-color: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 6px 25px rgba(79, 70, 229, 0.6);
+}
+
+.theme-default .floating-nav-button.main {
+  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+  box-shadow: 0 6px 25px rgba(6, 182, 212, 0.4);
+  border: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+.theme-default .floating-nav-button.main:hover {
+  background: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%);
+  box-shadow: 0 8px 30px rgba(6, 182, 212, 0.6);
+}
+
+/* 暗色主题 */
+.theme-dark .floating-nav-button {
+  background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.theme-dark .floating-nav-button:hover {
+  background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.theme-dark .floating-nav-button.main {
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+}
+
+/* 亮色主题 */
+.theme-light .floating-nav-button {
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  color: #333;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.theme-light .floating-nav-button:hover {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-color: rgba(0, 0, 0, 0.2);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.theme-light .floating-nav-button.main {
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  color: white;
+}
+
+/* 彩虹主题 */
+.theme-rainbow .floating-nav-button {
+  background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.theme-rainbow .floating-nav-button:hover {
+  background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+}
+
+.theme-rainbow .floating-nav-button.main {
+  background: linear-gradient(135deg, #ff6b6b 0%, #feca57 50%, #48dbfb 100%);
+  animation: rainbow-rotate 3s linear infinite;
+}
+
+@keyframes rainbow-rotate {
+  0% { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
+}
+
+/* 玻璃形态主题 */
+.theme-glass .floating-nav-button {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: rgba(0, 0, 0, 0.8);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.theme-glass .floating-nav-button:hover {
+  background: rgba(255, 255, 255, 0.35);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.theme-glass .floating-nav-button.main {
+  background: rgba(74, 144, 226, 0.3);
+  color: rgba(255, 255, 255, 0.9);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* 特定按钮样式 - 增强对比度 */
+.floating-nav-button.scroll-top {
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  border-color: rgba(5, 150, 105, 0.4);
+  box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
+}
+
+.floating-nav-button.scroll-top:hover {
+  box-shadow: 0 6px 20px rgba(5, 150, 105, 0.5);
+}
+
+.floating-nav-button.scroll-bottom {
+  background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+  border-color: rgba(220, 38, 38, 0.4);
+  box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
+}
+
+.floating-nav-button.scroll-bottom:hover {
+  box-shadow: 0 6px 20px rgba(220, 38, 38, 0.5);
+}
+
+.floating-nav-button.refresh {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  border-color: rgba(37, 99, 235, 0.4);
+  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+}
+
+.floating-nav-button.refresh:hover {
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5);
+}
+
+.floating-nav-button.back {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  border-color: rgba(245, 158, 11, 0.4);
+  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+}
+
+.floating-nav-button.back:hover {
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.5);
+}
+
+.floating-nav-button.forward {
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  border-color: rgba(22, 163, 74, 0.4);
+  box-shadow: 0 4px 15px rgba(22, 163, 74, 0.3);
+}
+
+.floating-nav-button.forward:hover {
+  box-shadow: 0 6px 20px rgba(22, 163, 74, 0.5);
+}
+
+.floating-nav-button.new-tab {
+  background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%);
+  border-color: rgba(147, 51, 234, 0.4);
+  box-shadow: 0 4px 15px rgba(147, 51, 234, 0.3);
+}
+
+.floating-nav-button.new-tab:hover {
+  box-shadow: 0 6px 20px rgba(147, 51, 234, 0.5);
+}
+
+.floating-nav-button.bookmark {
+  background: linear-gradient(135deg, #ea580c 0%, #dc2626 100%);
+  border-color: rgba(234, 88, 12, 0.4);
+  box-shadow: 0 4px 15px rgba(234, 88, 12, 0.3);
+}
+
+.floating-nav-button.bookmark:hover {
+  box-shadow: 0 6px 20px rgba(234, 88, 12, 0.5);
+}
+
+.floating-nav-button.settings {
+  background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+  border-color: rgba(75, 85, 99, 0.4);
+  box-shadow: 0 4px 15px rgba(75, 85, 99, 0.3);
+}
+
+.floating-nav-button.settings:hover {
+  box-shadow: 0 6px 20px rgba(75, 85, 99, 0.5);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .floating-nav-button {
+    width: 45px;
+    height: 45px;
+  }
+  
+  .floating-nav-button.main {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .button-icon {
+    font-size: 16px;
+  }
+  
+  .floating-nav-button.main .button-icon {
+    font-size: 20px;
+  }
+  
+  .button-label {
+    font-size: 11px;
+    padding: 3px 6px;
+  }
+}
+
+/* 动画效果 - 移除可能导致位置变化的pulse动画 */
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.8; }
+  100% { opacity: 1; }
+}
+
+.floating-nav-button.pulse {
+  animation: pulse 1s ease-in-out infinite;
+}
+
+/* 禁用选择和拖拽 */
+.floating-nav-container * {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+  user-drag: none;
+}
+
+/* 确保在所有网站上都能正常显示 */
+#floating-navigation,
+#floating-navigation * {
+  box-sizing: border-box !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  outline: none !important;
+  text-decoration: none !important;
+  list-style: none !important;
+  background-image: none !important;
+}
+
+/* 重置可能的冲突样式 */
+#floating-navigation {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  font-size: 14px !important;
+  line-height: 1 !important;
+  color: inherit !important;
+  text-align: center !important;
+}

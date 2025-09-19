@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图标生成器 - 悬浮导航</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 2em;
+        }
+
+        .description {
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .icon-preview {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            align-items: center;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .icon-item {
+            text-align: center;
+        }
+
+        .icon-item canvas {
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .icon-item span {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .generate-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 20px 10px;
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .generate-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .instructions {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .instructions h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .instructions ol {
+            color: #666;
+            line-height: 1.6;
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 图标生成器</h1>
+        <p class="description">
+            为悬浮导航扩展生成不同尺寸的PNG图标文件。点击下方按钮将自动生成并下载所需的图标。
+        </p>
+
+        <div class="icon-preview">
+            <div class="icon-item">
+                <canvas id="canvas16" width="16" height="16"></canvas>
+                <div><span>16×16 px</span></div>
+            </div>
+            <div class="icon-item">
+                <canvas id="canvas48" width="48" height="48"></canvas>
+                <div><span>48×48 px</span></div>
+            </div>
+            <div class="icon-item">
+                <canvas id="canvas128" width="128" height="128"></canvas>
+                <div><span>128×128 px</span></div>
+            </div>
+        </div>
+
+        <button id="generate-single" class="generate-btn">🖼️ 生成单个图标</button>
+        <button id="generate-all" class="generate-btn">📦 生成全部图标</button>
+
+        <div id="status" class="status"></div>
+
+        <div class="instructions">
+            <h3>📋 使用说明</h3>
+            <ol>
+                <li>点击"生成全部图标"按钮</li>
+                <li>浏览器会自动下载三个PNG文件</li>
+                <li>将下载的文件重命名为：
+                    <ul style="margin-top: 5px;">
+                        <li>icon16.png</li>
+                        <li>icon48.png</li>
+                        <li>icon128.png</li>
+                    </ul>
+                </li>
+                <li>将图标文件放入 icons/ 文件夹</li>
+                <li>按照README.md的说明安装扩展</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        class IconGenerator {
+            constructor() {
+                this.svgContent = `
+                    <svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <radialGradient id="bgGradient" cx="50%" cy="30%" r="70%">
+                                <stop offset="0%" style="stop-color:#4facfe;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#00f2fe;stop-opacity:1" />
+                            </radialGradient>
+                            <linearGradient id="buttonGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+                            </linearGradient>
+                            <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+                                <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000" flood-opacity="0.3"/>
+                            </filter>
+                        </defs>
+                        <circle cx="64" cy="64" r="60" fill="url(#bgGradient)" filter="url(#shadow)"/>
+                        <circle cx="64" cy="64" r="28" fill="url(#buttonGradient)" opacity="0.9"/>
+                        <rect x="60" y="48" width="8" height="32" rx="4" fill="white"/>
+                        <rect x="48" y="60" width="32" height="8" rx="4" fill="white"/>
+                        <circle cx="40" cy="40" r="4" fill="white" opacity="0.8"/>
+                        <circle cx="88" cy="40" r="4" fill="white" opacity="0.8"/>
+                        <circle cx="40" cy="88" r="4" fill="white" opacity="0.8"/>
+                        <circle cx="88" cy="88" r="4" fill="white" opacity="0.8"/>
+                        <circle cx="64" cy="64" r="58" fill="none" stroke="white" stroke-width="2" opacity="0.3"/>
+                    </svg>
+                `;
+                this.init();
+            }
+
+            init() {
+                this.generatePreviews();
+                this.bindEvents();
+            }
+
+            bindEvents() {
+                document.getElementById('generate-single').addEventListener('click', () => {
+                    this.generateSingleIcon();
+                });
+
+                document.getElementById('generate-all').addEventListener('click', () => {
+                    this.generateAllIcons();
+                });
+            }
+
+            generatePreviews() {
+                const sizes = [16, 48, 128];
+                sizes.forEach(size => {
+                    this.renderIconToCanvas(`canvas${size}`, size);
+                });
+            }
+
+            renderIconToCanvas(canvasId, size) {
+                const canvas = document.getElementById(canvasId);
+                const ctx = canvas.getContext('2d');
+                
+                // 创建临时图片元素
+                const img = new Image();
+                const svg = new Blob([this.svgContent], {type: 'image/svg+xml'});
+                const url = URL.createObjectURL(svg);
+                
+                img.onload = () => {
+                    ctx.clearRect(0, 0, size, size);
+                    ctx.drawImage(img, 0, 0, size, size);
+                    URL.revokeObjectURL(url);
+                };
+                
+                img.src = url;
+            }
+
+            async generateSingleIcon() {
+                try {
+                    const size = prompt('请输入图标尺寸 (16, 48, 或 128):', '48');
+                    if (!size || ![16, 48, 128].includes(parseInt(size))) {
+                        this.showStatus('请输入有效的尺寸 (16, 48, 或 128)', 'error');
+                        return;
+                    }
+                    
+                    const iconData = await this.generateIcon(parseInt(size));
+                    this.downloadIcon(iconData, `icon${size}.png`);
+                    this.showStatus(`图标 ${size}×${size} 生成成功！`, 'success');
+                } catch (error) {
+                    this.showStatus('生成图标失败: ' + error.message, 'error');
+                }
+            }
+
+            async generateAllIcons() {
+                try {
+                    const sizes = [16, 48, 128];
+                    this.showStatus('正在生成图标...', 'success');
+                    
+                    for (const size of sizes) {
+                        const iconData = await this.generateIcon(size);
+                        this.downloadIcon(iconData, `icon${size}.png`);
+                        await this.delay(500); // 延迟下载避免冲突
+                    }
+                    
+                    this.showStatus('所有图标生成完成！请查看下载文件夹。', 'success');
+                } catch (error) {
+                    this.showStatus('生成图标失败: ' + error.message, 'error');
+                }
+            }
+
+            generateIcon(size) {
+                return new Promise((resolve, reject) => {
+                    try {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = size;
+                        canvas.height = size;
+                        const ctx = canvas.getContext('2d');
+                        
+                        const img = new Image();
+                        const svgResized = this.svgContent.replace(/width="128"/, `width="${size}"`).replace(/height="128"/, `height="${size}"`);
+                        const svgBlob = new Blob([svgResized], {type: 'image/svg+xml'});
+                        const url = URL.createObjectURL(svgBlob);
+                        
+                        img.onload = () => {
+                            ctx.drawImage(img, 0, 0, size, size);
+                            canvas.toBlob((blob) => {
+                                URL.revokeObjectURL(url);
+                                if (blob) {
+                                    resolve(blob);
+                                } else {
+                                    reject(new Error('无法生成图标'));
+                                }
+                            }, 'image/png');
+                        };
+                        
+                        img.onerror = () => {
+                            URL.revokeObjectURL(url);
+                            reject(new Error('图标加载失败'));
+                        };
+                        
+                        img.src = url;
+                    } catch (error) {
+                        reject(error);
+                    }
+                });
+            }
+
+            downloadIcon(blob, filename) {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+
+            showStatus(message, type) {
+                const status = document.getElementById('status');
+                status.textContent = message;
+                status.className = `status ${type}`;
+                status.style.display = 'block';
+                
+                if (type === 'success') {
+                    setTimeout(() => {
+                        status.style.display = 'none';
+                    }, 5000);
+                }
+            }
+
+            delay(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+        }
+
+        // 初始化图标生成器
+        document.addEventListener('DOMContentLoaded', () => {
+            new IconGenerator();
+        });
+    </script>
+</body>
+</html>

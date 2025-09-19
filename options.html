@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>悬浮导航 - 设置</title>
+    <link rel="stylesheet" href="options.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>⊕ 悬浮导航设置</h1>
+            <p class="subtitle">自定义您的浏览器悬浮导航体验</p>
+        </header>
+
+        <!-- 欢迎页面 -->
+        <div id="welcome-section" class="section hidden">
+            <div class="welcome-card">
+                <h2>🎉 欢迎使用悬浮导航！</h2>
+                <p>感谢您安装悬浮导航扩展。这个工具将为您提供便捷的浏览器操作体验。</p>
+                <div class="features-list">
+                    <div class="feature-item">
+                        <span class="feature-icon">🎯</span>
+                        <span>可拖拽的悬浮按钮</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon">⚡</span>
+                        <span>丰富的快捷操作</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon">🎨</span>
+                        <span>多样的主题皮肤</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon">⚙️</span>
+                        <span>灵活的自定义设置</span>
+                    </div>
+                </div>
+                <button id="start-setup" class="btn btn-primary">开始设置</button>
+            </div>
+        </div>
+
+        <nav class="tab-nav">
+            <button class="tab-btn active" data-tab="general">常规设置</button>
+            <button class="tab-btn" data-tab="appearance">外观主题</button>
+            <button class="tab-btn" data-tab="functions">功能按钮</button>
+            <button class="tab-btn" data-tab="shortcuts">快捷键</button>
+            <button class="tab-btn" data-tab="advanced">高级选项</button>
+        </nav>
+
+        <!-- 常规设置 -->
+        <div id="general-tab" class="tab-content active">
+            <div class="section">
+                <h3>基础设置</h3>
+                <div class="setting-group">
+                    <div class="setting-item">
+                        <label class="setting-label">
+                            <input type="checkbox" id="enableAnimation" class="toggle-switch">
+                            <span class="slider"></span>
+                            启用动画效果
+                        </label>
+                        <p class="setting-desc">页面滚动和按钮切换时显示平滑动画</p>
+                    </div>
+
+                    <div class="setting-item">
+                        <label class="setting-label">
+                            <input type="checkbox" id="showLabels" class="toggle-switch">
+                            <span class="slider"></span>
+                            显示按钮标签
+                        </label>
+                        <p class="setting-desc">悬停时显示按钮功能说明</p>
+                    </div>
+
+                    <div class="setting-item">
+                        <label for="buttonSize">按钮大小</label>
+                        <select id="buttonSize" class="select-input">
+                            <option value="small">小</option>
+                            <option value="medium">中</option>
+                            <option value="large">大</option>
+                        </select>
+                    </div>
+
+                    <div class="setting-item">
+                        <label for="defaultPosition">默认位置</label>
+                        <div class="position-grid">
+                            <button class="position-btn" data-position="top-left">↖️</button>
+                            <button class="position-btn" data-position="top-center">⬆️</button>
+                            <button class="position-btn" data-position="top-right">↗️</button>
+                            <button class="position-btn" data-position="center-left">⬅️</button>
+                            <button class="position-btn" data-position="center">⊙</button>
+                            <button class="position-btn" data-position="center-right">➡️</button>
+                            <button class="position-btn" data-position="bottom-left">↙️</button>
+                            <button class="position-btn" data-position="bottom-center">⬇️</button>
+                            <button class="position-btn active" data-position="bottom-right">↘️</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 外观主题 -->
+        <div id="appearance-tab" class="tab-content">
+            <div class="section">
+                <h3>主题选择</h3>
+                <div class="theme-grid">
+                    <div class="theme-card active" data-theme="default">
+                        <div class="theme-preview theme-default-preview"></div>
+                        <h4>默认主题</h4>
+                        <p>经典渐变色彩</p>
+                    </div>
+                    <div class="theme-card" data-theme="dark">
+                        <div class="theme-preview theme-dark-preview"></div>
+                        <h4>暗色主题</h4>
+                        <p>深色商务风格</p>
+                    </div>
+                    <div class="theme-card" data-theme="light">
+                        <div class="theme-preview theme-light-preview"></div>
+                        <h4>亮色主题</h4>
+                        <p>简洁明亮设计</p>
+                    </div>
+                    <div class="theme-card" data-theme="rainbow">
+                        <div class="theme-preview theme-rainbow-preview"></div>
+                        <h4>彩虹主题 ⭐</h4>
+                        <p>炫彩渐变效果</p>
+                        <span class="pro-badge">PRO</span>
+                    </div>
+                    <div class="theme-card" data-theme="glass">
+                        <div class="theme-preview theme-glass-preview"></div>
+                        <h4>玻璃主题 ⭐</h4>
+                        <p>毛玻璃透明效果</p>
+                        <span class="pro-badge">PRO</span>
+                    </div>
+                    <div class="theme-card coming-soon">
+                        <div class="theme-preview"></div>
+                        <h4>更多主题</h4>
+                        <p>敬请期待...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 功能按钮 -->
+        <div id="functions-tab" class="tab-content">
+            <div class="section">
+                <h3>按钮功能配置</h3>
+                <div class="function-list">
+                    <div class="function-item">
+                        <div class="function-info">
+                            <span class="function-icon">↑</span>
+                            <div>
+                                <h4>回到顶部</h4>
+                                <p>快速滚动到页面顶部</p>
+                            </div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="func-scrollTop" checked>
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="function-item">
+                        <div class="function-info">
+                            <span class="function-icon">↓</span>
+                            <div>
+                                <h4>到达底部</h4>
+                                <p>快速滚动到页面底部</p>
+                            </div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="func-scrollBottom" checked>
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="function-item">
+                        <div class="function-info">
+                            <span class="function-icon">⟲</span>
+                            <div>
+                                <h4>刷新页面</h4>
+                                <p>重新加载当前页面</p>
+                            </div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="func-refresh" checked>
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="function-item">
+                        <div class="function-info">
+                            <span class="function-icon">←</span>
+                            <div>
+                                <h4>后退</h4>
+                                <p>返回上一个页面</p>
+                            </div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="func-back" checked>
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="function-item">
+                        <div class="function-info">
+                            <span class="function-icon">→</span>
+                            <div>
+                                <h4>前进</h4>
+                                <p>前往下一个页面</p>
+                            </div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="func-forward" checked>
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="function-item">
+                        <div class="function-info">
+                            <span class="function-icon">⊞</span>
+                            <div>
+                                <h4>新标签页</h4>
+                                <p>打开新的浏览器标签页</p>
+                            </div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="func-newTab" checked>
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="function-item">
+                        <div class="function-info">
+                            <span class="function-icon">★</span>
+                            <div>
+                                <h4>添加书签</h4>
+                                <p>将当前页面添加到书签</p>
+                            </div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="func-bookmark" checked>
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="function-item">
+                        <div class="function-info">
+                            <span class="function-icon">⚙</span>
+                            <div>
+                                <h4>设置</h4>
+                                <p>打开扩展设置页面</p>
+                            </div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="func-settings" checked>
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 快捷键 -->
+        <div id="shortcuts-tab" class="tab-content">
+            <div class="section">
+                <h3>快捷键设置</h3>
+                <div class="shortcut-list">
+                    <div class="shortcut-item">
+                        <div class="shortcut-info">
+                            <h4>切换悬浮导航</h4>
+                            <p>显示/隐藏悬浮导航</p>
+                        </div>
+                        <input type="text" class="shortcut-input" id="shortcut-toggle" value="Ctrl+Shift+F" readonly>
+                    </div>
+
+                    <div class="shortcut-item">
+                        <div class="shortcut-info">
+                            <h4>快速到顶</h4>
+                            <p>快速滚动到页面顶部</p>
+                        </div>
+                        <input type="text" class="shortcut-input" id="shortcut-top" value="Ctrl+Home" readonly>
+                    </div>
+
+                    <div class="shortcut-item">
+                        <div class="shortcut-info">
+                            <h4>快速到底</h4>
+                            <p>快速滚动到页面底部</p>
+                        </div>
+                        <input type="text" class="shortcut-input" id="shortcut-bottom" value="Ctrl+End" readonly>
+                    </div>
+                </div>
+                <p class="note">💡 提示：快捷键设置需要在Chrome扩展管理页面中配置</p>
+            </div>
+        </div>
+
+        <!-- 高级选项 -->
+        <div id="advanced-tab" class="tab-content">
+            <div class="section">
+                <h3>数据管理</h3>
+                <div class="advanced-actions">
+                    <div class="action-group">
+                        <h4>备份与恢复</h4>
+                        <div class="action-buttons">
+                            <button id="export-settings" class="btn btn-secondary">
+                                <span>📤</span> 导出设置
+                            </button>
+                            <button id="import-settings" class="btn btn-secondary">
+                                <span>📥</span> 导入设置
+                            </button>
+                            <input type="file" id="import-file" accept=".json" style="display: none;">
+                        </div>
+                    </div>
+
+                    <div class="action-group">
+                        <h4>重置选项</h4>
+                        <div class="action-buttons">
+                            <button id="reset-position" class="btn btn-warning">
+                                <span>📍</span> 重置位置
+                            </button>
+                            <button id="reset-all" class="btn btn-danger">
+                                <span>🔄</span> 恢复默认
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>关于扩展</h3>
+                    <div class="about-info">
+                        <p><strong>版本：</strong><span id="version">1.0.0</span></p>
+                        <p><strong>作者：</strong>悬浮导航团队</p>
+                        <p><strong>更新：</strong>2024年最新版本</p>
+                        <div class="links">
+                            <a href="#" class="link">🐛 反馈问题</a>
+                            <a href="#" class="link">⭐ 评价扩展</a>
+                            <a href="#" class="link">📖 使用帮助</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 状态提示 -->
+        <div id="status-message" class="status-message hidden">
+            <span id="status-text"></span>
+        </div>
+    </div>
+
+    <script src="options.js"></script>
+</body>
+</html>
