@@ -11,12 +11,17 @@
 .floating-nav-container {
   position: relative;
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  /* CSS变量定义 */
+  --button-size-scale: 0.8; /* 默认80%大小 */
+  --button-opacity: 0.9; /* 默认90%透明度 */
+  --base-button-size: 50px; /* 基础按钮大小 */
+  --main-button-size: 56px; /* 主按钮基础大小 */
 }
 
 /* 主按钮 */
 .floating-nav-button {
-  width: 50px;
-  height: 50px;
+  width: calc(var(--base-button-size) * var(--button-size-scale));
+  height: calc(var(--base-button-size) * var(--button-size-scale));
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -27,6 +32,7 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  opacity: var(--button-opacity);
 }
 
 .floating-nav-button:hover {
@@ -35,73 +41,24 @@
 }
 
 .floating-nav-button.main {
-  width: 56px;
-  height: 56px;
-  font-size: 24px;
-  font-weight: bold;
+  width: calc(var(--main-button-size) * var(--button-size-scale));
+  height: calc(var(--main-button-size) * var(--button-size-scale));
+  cursor: grab;
+  user-select: none;
 }
 
-/* 按钮大小样式 */
-/* 小号按钮 */
-.floating-nav-button.size-small {
-  width: 40px;
-  height: 40px;
+.floating-nav-button.main .button-icon {
+  font-size: calc(26px * var(--button-size-scale));
+  font-weight: 900;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
 }
 
-.floating-nav-button.size-small .button-icon {
-  font-size: 14px;
-}
 
-.floating-nav-button.size-small.main {
-  width: 46px;
-  height: 46px;
-}
 
-.floating-nav-button.size-small.main .button-icon {
-  font-size: 20px;
-}
 
-/* 中号按钮（默认） */
-.floating-nav-button.size-medium {
-  width: 50px;
-  height: 50px;
-}
-
-.floating-nav-button.size-medium .button-icon {
-  font-size: 18px;
-}
-
-.floating-nav-button.size-medium.main {
-  width: 56px;
-  height: 56px;
-}
-
-.floating-nav-button.size-medium.main .button-icon {
-  font-size: 26px;
-}
-
-/* 大号按钮 */
-.floating-nav-button.size-large {
-  width: 60px;
-  height: 60px;
-}
-
-.floating-nav-button.size-large .button-icon {
-  font-size: 22px;
-}
-
-.floating-nav-button.size-large.main {
-  width: 66px;
-  height: 66px;
-}
-
-.floating-nav-button.size-large.main .button-icon {
-  font-size: 30px;
-}
-
-/* 按钮图标 */
+/* 按钮图标 - 使用动态大小 */
 .button-icon {
-  font-size: 18px;
+  font-size: calc(18px * var(--button-size-scale));
   line-height: 1;
   z-index: 2;
   font-weight: bold;
@@ -142,19 +99,10 @@
 }
 
 /* 按钮组容器大小调整 */
-.floating-nav-container.size-small .floating-nav-buttons {
-  width: 160px;
-  height: 160px;
-}
-
-.floating-nav-container.size-medium .floating-nav-buttons {
-  width: 200px;
-  height: 200px;
-}
-
-.floating-nav-container.size-large .floating-nav-buttons {
-  width: 240px;
-  height: 240px;
+/* 功能按钮容器 - 使用动态大小 */
+.floating-nav-buttons {
+  width: calc(200px * var(--button-size-scale));
+  height: calc(200px * var(--button-size-scale));
 }
 
 .floating-nav-container.expanded .floating-nav-buttons {
@@ -568,23 +516,11 @@
 
 /* 响应式设计 */
 @media (max-width: 768px) {
-  /* 移动端按钮大小调整 */
-  .floating-nav-container.size-small .floating-nav-buttons {
-    width: 140px;
-    height: 140px;
+  /* 移动端的动态按钮容器大小 */
+  .floating-nav-buttons {
+    width: calc(180px * var(--button-size-scale));
+    height: calc(180px * var(--button-size-scale));
   }
-
-  .floating-nav-container.size-medium .floating-nav-buttons {
-    width: 180px;
-    height: 180px;
-  }
-
-  .floating-nav-container.size-large .floating-nav-buttons {
-    width: 220px;
-    height: 220px;
-  }
-  
-  /* 按钮标签样式已移除 */
 }
 
 /* 动画效果 - 移除可能导致位置变化的pulse动画 */

@@ -11,7 +11,8 @@ class FloatingNavigation {
     this.settings = {
       position: { x: defaultX, y: defaultY },
       enableAnimation: true,
-      buttonSize: 'medium',
+      buttonSize: 80, // 默认80%大小
+      buttonOpacity: 90, // 默认90%透明度
       theme: 'default',
       enabledButtons: {
         scrollTop: true,
@@ -88,14 +89,19 @@ class FloatingNavigation {
     // 创建主容器
     this.container = document.createElement('div');
     this.container.id = 'floating-navigation';
-    this.container.className = `floating-nav-container theme-${this.settings.theme} size-${this.settings.buttonSize}`;
+    this.container.className = `floating-nav-container theme-${this.settings.theme}`;
     
     // 设置初始位置，确保在屏幕范围内
     const adjustedPosition = this.adjustPositionToScreen(this.settings.position);
     this.container.style.left = adjustedPosition.x + 'px';
     this.container.style.top = adjustedPosition.y + 'px';
+    
+    // 应用按钮大小和透明度
+    this.applyButtonStyles();
+    
     console.log('📍 设置位置:', adjustedPosition);
-    console.log('📏 按钮大小:', this.settings.buttonSize);
+    console.log('📏 按钮大小:', this.settings.buttonSize + '%');
+    console.log('🎭 按钮透明度:', this.settings.buttonOpacity + '%');
 
     // 创建主按钮
     this.mainButton = this.createButton('main', '⊕', '悬浮导航');
@@ -156,13 +162,12 @@ class FloatingNavigation {
       // 设置按钮位置（圆形均匀分布）
       const angle = (index * (360 / enabledButtons.length)) - 90; // 均匀分布，从顶部开始
       
-      // 根据按钮大小调整半径
-      let radius = 70; // 默认中号按钮半径
-      if (this.settings.buttonSize === 'small') {
-        radius = 55;
-      } else if (this.settings.buttonSize === 'large') {
-        radius = 85;
-      }
+      // 根据按钮大小百分比调整半径
+      // 基础半径为70，根据百分比调整（50%-120%对应半径45-95）
+      const baseRadius = 70;
+      const sizePercent = this.settings.buttonSize / 100;
+      const radius = Math.round(baseRadius * sizePercent);
+      console.log('🔘 计算半径:', radius, '基于大小:', this.settings.buttonSize + '%');
       
       const radian = (angle * Math.PI) / 180;
       const x = Math.cos(radian) * radius;
@@ -193,13 +198,27 @@ class FloatingNavigation {
 
   createButton(id, icon, title) {
     const button = document.createElement('div');
-    button.className = `floating-nav-button ${id} size-${this.settings.buttonSize}`;
+    button.className = `floating-nav-button ${id}`;
     button.innerHTML = `
       <span class="button-icon">${icon}</span>
     `;
     button.title = title; // 保留悬停提示
     button.setAttribute('data-id', id);
     return button;
+  }
+  
+  // 应用按钮样式（大小和透明度）
+  applyButtonStyles() {
+    if (!this.container) return;
+    
+    const sizePercent = this.settings.buttonSize / 100; // 转换为小数
+    const opacityPercent = this.settings.buttonOpacity / 100; // 转换为小数
+    
+    // 设置CSS变量，用于动态控制按钮大小和透明度
+    this.container.style.setProperty('--button-size-scale', sizePercent);
+    this.container.style.setProperty('--button-opacity', opacityPercent);
+    
+    console.log('🎨 应用按钮样式 - 大小:', sizePercent, '透明度:', opacityPercent);
   }
 
   bindEvents() {
@@ -585,10 +604,19 @@ class FloatingNavigation {
       Object.keys(newSettings).length === 1 && 
       JSON.stringify(oldSettings.enabledButtons) !== JSON.stringify(newSettings.enabledButtons);
     
+    // 检查是否只是样式设置发生了变化（大小、透明度）
+    const onlyStyleChanged = (newSettings.buttonSize !== undefined || newSettings.buttonOpacity !== undefined) &&
+      !newSettings.enabledButtons && !newSettings.theme && !newSettings.position;
+    
     if (onlyButtonsChanged) {
       // 只重新创建功能按钮
       console.log('⚡ 仅更新功能按钮');
       this.recreateFunctionButtons();
+    } else if (onlyStyleChanged) {
+      // 只更新按钮样式
+      console.log('🎨 仅更新按钮样式');
+      this.applyButtonStyles();
+      this.recreateFunctionButtons(); // 重新创建按钮以应用新的半径
     } else {
       // 完全重新创建导航界面
       console.log('🔄 完整重新创建导航界面');

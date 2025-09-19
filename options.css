@@ -342,6 +342,87 @@ body {
     border-color: #667eea;
 }
 
+/* 滑动条容器 */
+.slider-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+/* 滑动条样式 */
+.slider {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 8px;
+    border-radius: 10px;
+    background: #e1e5e9;
+    outline: none;
+    transition: background 0.3s ease;
+}
+
+.slider:hover {
+    background: #d1d9e6;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    transition: all 0.3s ease;
+}
+
+.slider::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+    box-shadow: 0 3px 12px rgba(102, 126, 234, 0.4);
+}
+
+.slider::-webkit-slider-thumb:active {
+    transform: scale(0.95);
+}
+
+.slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    transition: all 0.3s ease;
+}
+
+.slider::-moz-range-thumb:hover {
+    transform: scale(1.1);
+    box-shadow: 0 3px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* 滑动条数值显示 */
+.slider-display {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    min-width: 50px;
+    font-weight: 600;
+    color: #667eea;
+    font-size: 14px;
+}
+
+.slider-value {
+    font-weight: bold;
+}
+
+.slider-unit {
+    opacity: 0.7;
+    font-size: 12px;
+}
+
 /* 位置网格 */
 .position-grid {
     display: grid;

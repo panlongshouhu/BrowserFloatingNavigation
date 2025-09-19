@@ -98,11 +98,24 @@
 
                     <div class="setting-item">
                         <label for="buttonSize">按钮大小</label>
-                        <select id="buttonSize" class="select-input">
-                            <option value="small">小</option>
-                            <option value="medium">中</option>
-                            <option value="large">大</option>
-                        </select>
+                        <div class="slider-container">
+                            <input type="range" id="buttonSize" class="slider" min="50" max="120" value="80" step="5">
+                            <div class="slider-display">
+                                <span class="slider-value" id="buttonSizeValue">80</span>
+                                <span class="slider-unit">%</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <label for="buttonOpacity">按钮透明度</label>
+                        <div class="slider-container">
+                            <input type="range" id="buttonOpacity" class="slider" min="20" max="100" value="90" step="5">
+                            <div class="slider-display">
+                                <span class="slider-value" id="buttonOpacityValue">90</span>
+                                <span class="slider-unit">%</span>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="setting-item">

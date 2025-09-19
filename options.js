@@ -87,7 +87,8 @@ class OptionsManager {
     return {
       position: { x: window.screen.width - 80, y: window.screen.height - 80 },
       enableAnimation: true,
-      buttonSize: 'medium',
+      buttonSize: 80, // 改为百分比数值，80%
+      buttonOpacity: 90, // 新增透明度设置，90%
       theme: 'default',
       isWelcomeCompleted: true, // 在设置页面中默认为已完成
       enabledButtons: {
@@ -114,7 +115,18 @@ class OptionsManager {
     
     // 常规设置
     document.getElementById('enableAnimation').checked = this.settings.enableAnimation;
-    document.getElementById('buttonSize').value = this.settings.buttonSize;
+    
+    // 按钮大小滑动条
+    const buttonSizeSlider = document.getElementById('buttonSize');
+    const buttonSizeValue = document.getElementById('buttonSizeValue');
+    buttonSizeSlider.value = this.settings.buttonSize || 80;
+    buttonSizeValue.textContent = buttonSizeSlider.value;
+    
+    // 按钮透明度滑动条
+    const buttonOpacitySlider = document.getElementById('buttonOpacity');
+    const buttonOpacityValue = document.getElementById('buttonOpacityValue');
+    buttonOpacitySlider.value = this.settings.buttonOpacity || 90;
+    buttonOpacityValue.textContent = buttonOpacitySlider.value;
     
     // 位置设置
     this.updatePositionButtons();
@@ -254,10 +266,38 @@ class OptionsManager {
       this.saveSettings();
     });
 
-    document.getElementById('buttonSize').addEventListener('change', (e) => {
-      this.settings.buttonSize = e.target.value;
-      this.saveSettings();
-      this.showStatus(`按钮大小已更改为: ${e.target.value}`, 'success');
+    // 按钮大小滑动条事件
+    const buttonSizeSlider = document.getElementById('buttonSize');
+    const buttonSizeValue = document.getElementById('buttonSizeValue');
+    
+    buttonSizeSlider.addEventListener('input', (e) => {
+      const value = parseInt(e.target.value);
+      buttonSizeValue.textContent = value;
+      this.settings.buttonSize = value;
+      
+      // 实时更新，但延迟保存以避免频繁写入
+      clearTimeout(this.buttonSizeTimeout);
+      this.buttonSizeTimeout = setTimeout(() => {
+        this.saveSettings();
+        this.showStatus(`按钮大小已调整为: ${value}%`, 'success');
+      }, 300);
+    });
+    
+    // 按钮透明度滑动条事件
+    const buttonOpacitySlider = document.getElementById('buttonOpacity');
+    const buttonOpacityValue = document.getElementById('buttonOpacityValue');
+    
+    buttonOpacitySlider.addEventListener('input', (e) => {
+      const value = parseInt(e.target.value);
+      buttonOpacityValue.textContent = value;
+      this.settings.buttonOpacity = value;
+      
+      // 实时更新，但延迟保存以避免频繁写入
+      clearTimeout(this.buttonOpacityTimeout);
+      this.buttonOpacityTimeout = setTimeout(() => {
+        this.saveSettings();
+        this.showStatus(`按钮透明度已调整为: ${value}%`, 'success');
+      }, 300);
     });
 
     // 位置设置
