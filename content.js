@@ -132,13 +132,13 @@ class FloatingNavigation {
   createFunctionButtons() {
     const allButtons = [
       { id: 'scroll-top', key: 'scrollTop', icon: '↑', label: '回到顶部', action: () => this.scrollToTop() },
-      { id: 'scroll-bottom', key: 'scrollBottom', icon: '↓', label: '到达底部', action: () => this.scrollToBottom() },
-      { id: 'refresh', key: 'refresh', icon: '⟲', label: '刷新页面', action: () => this.refreshPage() },
-      { id: 'back', key: 'back', icon: '←', label: '后退', action: () => this.goBack() },
+      { id: 'settings', key: 'settings', icon: '⚙', label: '设置', action: () => this.openSettings() },
       { id: 'forward', key: 'forward', icon: '→', label: '前进', action: () => this.goForward() },
       { id: 'new-tab', key: 'newTab', icon: '⊞', label: '新标签页', action: () => this.newTab() },
+      { id: 'scroll-bottom', key: 'scrollBottom', icon: '↓', label: '到达底部', action: () => this.scrollToBottom() },
       { id: 'bookmark', key: 'bookmark', icon: '★', label: '添加书签', action: () => this.addBookmark() },
-      { id: 'settings', key: 'settings', icon: '⚙', label: '设置', action: () => this.openSettings() }
+      { id: 'back', key: 'back', icon: '←', label: '后退', action: () => this.goBack() },
+      { id: 'refresh', key: 'refresh', icon: '⟲', label: '刷新页面', action: () => this.refreshPage() } 
     ];
 
     // 只创建启用的按钮
