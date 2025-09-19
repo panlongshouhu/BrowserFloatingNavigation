@@ -119,26 +119,7 @@
 }
 
 /* 按钮标签 */
-.button-label {
-  position: absolute;
-  left: 60px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: rgba(0, 0, 0, 0.8);
-  color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s ease;
-  z-index: 3;
-}
-
-.floating-nav-button:hover .button-label {
-  opacity: 1;
-}
+/* 按钮标签样式已移除，现在只使用浏览器原生tooltip */
 
 /* 按钮组容器 */
 .floating-nav-buttons {
@@ -598,10 +579,7 @@
     height: 220px;
   }
   
-  .button-label {
-    font-size: 11px;
-    padding: 3px 6px;
-  }
+  /* 按钮标签样式已移除 */
 }
 
 /* 动画效果 - 移除可能导致位置变化的pulse动画 */

@@ -11,7 +11,6 @@ class FloatingNavigation {
     this.settings = {
       position: { x: defaultX, y: defaultY },
       enableAnimation: true,
-      showLabels: true,
       buttonSize: 'medium',
       theme: 'default',
       enabledButtons: {
@@ -197,9 +196,8 @@ class FloatingNavigation {
     button.className = `floating-nav-button ${id} size-${this.settings.buttonSize}`;
     button.innerHTML = `
       <span class="button-icon">${icon}</span>
-      ${this.settings.showLabels ? `<span class="button-label">${title}</span>` : ''}
     `;
-    button.title = title;
+    button.title = title; // 保留悬停提示
     button.setAttribute('data-id', id);
     return button;
   }

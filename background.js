@@ -85,7 +85,6 @@ class BackgroundService {
       floatingNavSettings: {
         position: { x: 1200, y: 600 }, // 默认位置，会在content script中自动调整
         enableAnimation: true,
-        showLabels: true,
         buttonSize: 'medium',
         theme: 'default',
         isWelcomeCompleted: false, // 标记用户是否已完成欢迎设置

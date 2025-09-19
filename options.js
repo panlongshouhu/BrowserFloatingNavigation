@@ -87,7 +87,6 @@ class OptionsManager {
     return {
       position: { x: window.screen.width - 80, y: window.screen.height - 80 },
       enableAnimation: true,
-      showLabels: true,
       buttonSize: 'medium',
       theme: 'default',
       isWelcomeCompleted: true, // 在设置页面中默认为已完成
@@ -115,7 +114,6 @@ class OptionsManager {
     
     // 常规设置
     document.getElementById('enableAnimation').checked = this.settings.enableAnimation;
-    document.getElementById('showLabels').checked = this.settings.showLabels;
     document.getElementById('buttonSize').value = this.settings.buttonSize;
     
     // 位置设置
@@ -253,11 +251,6 @@ class OptionsManager {
     // 常规设置
     document.getElementById('enableAnimation').addEventListener('change', (e) => {
       this.settings.enableAnimation = e.target.checked;
-      this.saveSettings();
-    });
-
-    document.getElementById('showLabels').addEventListener('change', (e) => {
-      this.settings.showLabels = e.target.checked;
       this.saveSettings();
     });
 
