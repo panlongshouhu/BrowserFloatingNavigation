@@ -324,6 +324,181 @@
   border-color: rgba(255, 255, 255, 0.2);
 }
 
+/* 商务主题 */
+.theme-business .floating-nav-button {
+  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 20px rgba(30, 58, 138, 0.4);
+}
+
+.theme-business .floating-nav-button:hover {
+  background: linear-gradient(135deg, #3b82f6 0%, #1e3a8a 100%);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 6px 25px rgba(30, 58, 138, 0.6);
+}
+
+.theme-business .floating-nav-button.main {
+  background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+  box-shadow: 0 6px 25px rgba(29, 78, 216, 0.5);
+  border: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.theme-business .floating-nav-button.main:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  box-shadow: 0 8px 30px rgba(29, 78, 216, 0.7);
+}
+
+/* 海洋主题 */
+.theme-ocean .floating-nav-button {
+  background: linear-gradient(135deg, #0c4a6e 0%, #0ea5e9 100%);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 20px rgba(12, 74, 110, 0.4);
+}
+
+.theme-ocean .floating-nav-button:hover {
+  background: linear-gradient(135deg, #0ea5e9 0%, #0c4a6e 100%);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 6px 25px rgba(14, 165, 233, 0.6);
+}
+
+.theme-ocean .floating-nav-button.main {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  box-shadow: 0 6px 25px rgba(2, 132, 199, 0.5);
+  border: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.theme-ocean .floating-nav-button.main:hover {
+  background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
+  box-shadow: 0 8px 30px rgba(2, 132, 199, 0.7);
+}
+
+/* 森林主题 */
+.theme-forest .floating-nav-button {
+  background: linear-gradient(135deg, #14532d 0%, #22c55e 100%);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 20px rgba(20, 83, 45, 0.4);
+}
+
+.theme-forest .floating-nav-button:hover {
+  background: linear-gradient(135deg, #22c55e 0%, #14532d 100%);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 6px 25px rgba(34, 197, 94, 0.6);
+}
+
+.theme-forest .floating-nav-button.main {
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  box-shadow: 0 6px 25px rgba(22, 163, 74, 0.5);
+  border: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.theme-forest .floating-nav-button.main:hover {
+  background: linear-gradient(135deg, #15803d 0%, #16a34a 100%);
+  box-shadow: 0 8px 30px rgba(22, 163, 74, 0.7);
+}
+
+/* 落日主题 */
+.theme-sunset .floating-nav-button {
+  background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 20px rgba(234, 88, 12, 0.4);
+}
+
+.theme-sunset .floating-nav-button:hover {
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 6px 25px rgba(249, 115, 22, 0.6);
+}
+
+.theme-sunset .floating-nav-button.main {
+  background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+  box-shadow: 0 6px 25px rgba(220, 38, 38, 0.5);
+  border: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.theme-sunset .floating-nav-button.main:hover {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  box-shadow: 0 8px 30px rgba(220, 38, 38, 0.7);
+}
+
+/* 皇家主题 */
+.theme-royal .floating-nav-button {
+  background: linear-gradient(135deg, #581c87 0%, #a855f7 100%);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 20px rgba(88, 28, 135, 0.4);
+}
+
+.theme-royal .floating-nav-button:hover {
+  background: linear-gradient(135deg, #a855f7 0%, #581c87 100%);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 6px 25px rgba(168, 85, 247, 0.6);
+}
+
+.theme-royal .floating-nav-button.main {
+  background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%);
+  box-shadow: 0 6px 25px rgba(124, 58, 237, 0.5);
+  border: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.theme-royal .floating-nav-button.main:hover {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  box-shadow: 0 8px 30px rgba(124, 58, 237, 0.7);
+}
+
+/* 极简主题 */
+.theme-minimal .floating-nav-button {
+  background: linear-gradient(135deg, #111827 0%, #6b7280 100%);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 20px rgba(17, 24, 39, 0.3);
+}
+
+.theme-minimal .floating-nav-button:hover {
+  background: linear-gradient(135deg, #6b7280 0%, #111827 100%);
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 6px 25px rgba(107, 114, 128, 0.5);
+}
+
+.theme-minimal .floating-nav-button.main {
+  background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+  box-shadow: 0 6px 25px rgba(55, 65, 81, 0.4);
+  border: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+.theme-minimal .floating-nav-button.main:hover {
+  background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+  box-shadow: 0 8px 30px rgba(55, 65, 81, 0.6);
+}
+
+/* 霓虹主题 */
+.theme-neon .floating-nav-button {
+  background: linear-gradient(135deg, #065f46 0%, #10b981 100%);
+  color: white;
+  border: 2px solid rgba(16, 185, 129, 0.5);
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4), 0 0 20px rgba(16, 185, 129, 0.3);
+}
+
+.theme-neon .floating-nav-button:hover {
+  background: linear-gradient(135deg, #10b981 0%, #065f46 100%);
+  border-color: rgba(16, 185, 129, 0.8);
+  box-shadow: 0 6px 25px rgba(16, 185, 129, 0.6), 0 0 30px rgba(16, 185, 129, 0.5);
+}
+
+.theme-neon .floating-nav-button.main {
+  background: linear-gradient(135deg, #047857 0%, #059669 100%);
+  box-shadow: 0 6px 25px rgba(5, 150, 105, 0.5), 0 0 25px rgba(5, 150, 105, 0.4);
+  border: 3px solid rgba(16, 185, 129, 0.6);
+}
+
+.theme-neon .floating-nav-button.main:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  box-shadow: 0 8px 30px rgba(5, 150, 105, 0.7), 0 0 35px rgba(5, 150, 105, 0.6);
+}
+
 /* 特定按钮样式 - 增强对比度 */
 .floating-nav-button.scroll-top {
   background: linear-gradient(135deg, #059669 0%, #10b981 100%);

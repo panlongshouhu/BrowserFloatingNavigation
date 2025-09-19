@@ -203,17 +203,12 @@ class OptionsManager {
     });
 
     // 主题设置
-    document.querySelectorAll('.theme-card:not(.coming-soon)').forEach(card => {
+    document.querySelectorAll('.theme-card').forEach(card => {
       card.addEventListener('click', (e) => {
         const themeCard = e.currentTarget;
         const theme = themeCard.dataset.theme;
         
-        // 检查是否为VIP主题
-        if (themeCard.querySelector('.pro-badge') && !this.isVipUser()) {
-          this.showVipRequired();
-          return;
-        }
-        
+        // 所有主题都免费使用
         this.changeTheme(theme);
       });
     });
@@ -311,14 +306,7 @@ class OptionsManager {
     this.showStatus('主题已更换', 'success');
   }
 
-  isVipUser() {
-    // 这里可以实现VIP用户检查逻辑
-    return false;
-  }
-
-  showVipRequired() {
-    this.showStatus('该主题需要VIP会员', 'warning');
-  }
+  // VIP功能已移除，所有主题免费使用
 
   async saveSettings() {
     try {

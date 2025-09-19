@@ -312,6 +312,35 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.18);
 }
 
+.theme-business-preview {
+    background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+}
+
+.theme-ocean-preview {
+    background: linear-gradient(135deg, #0c4a6e 0%, #0ea5e9 100%);
+}
+
+.theme-forest-preview {
+    background: linear-gradient(135deg, #14532d 0%, #22c55e 100%);
+}
+
+.theme-sunset-preview {
+    background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
+}
+
+.theme-royal-preview {
+    background: linear-gradient(135deg, #581c87 0%, #a855f7 100%);
+}
+
+.theme-minimal-preview {
+    background: linear-gradient(135deg, #111827 0%, #6b7280 100%);
+}
+
+.theme-neon-preview {
+    background: linear-gradient(135deg, #065f46 0%, #10b981 100%);
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+}
+
 .theme-card h4 {
     margin-bottom: 8px;
     color: #333;
@@ -323,17 +352,7 @@ body {
     font-size: 0.9em;
 }
 
-.pro-badge {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: linear-gradient(45deg, #ffd700, #ffed4e);
-    color: #333;
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 10px;
-    font-weight: bold;
-}
+/* PRO标记已移除，所有主题免费使用 */
 
 /* 功能列表 */
 .function-list {

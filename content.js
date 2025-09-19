@@ -13,7 +13,17 @@ class FloatingNavigation {
       enableAnimation: true,
       showLabels: true,
       buttonSize: 'medium',
-      theme: 'default'
+      theme: 'default',
+      enabledButtons: {
+        scrollTop: true,
+        scrollBottom: true,
+        refresh: true,
+        back: true,
+        forward: true,
+        newTab: true,
+        bookmark: true,
+        settings: true
+      }
     };
     this.init();
   }
@@ -114,18 +124,22 @@ class FloatingNavigation {
   }
 
   createFunctionButtons() {
-    const buttons = [
-      { id: 'scroll-top', icon: '↑', label: '回到顶部', action: () => this.scrollToTop() },
-      { id: 'scroll-bottom', icon: '↓', label: '到达底部', action: () => this.scrollToBottom() },
-      { id: 'refresh', icon: '⟲', label: '刷新页面', action: () => this.refreshPage() },
-      { id: 'back', icon: '←', label: '后退', action: () => this.goBack() },
-      { id: 'forward', icon: '→', label: '前进', action: () => this.goForward() },
-      { id: 'new-tab', icon: '⊞', label: '新标签页', action: () => this.newTab() },
-      { id: 'bookmark', icon: '★', label: '添加书签', action: () => this.addBookmark() },
-      { id: 'settings', icon: '⚙', label: '设置', action: () => this.openSettings() }
+    const allButtons = [
+      { id: 'scroll-top', key: 'scrollTop', icon: '↑', label: '回到顶部', action: () => this.scrollToTop() },
+      { id: 'scroll-bottom', key: 'scrollBottom', icon: '↓', label: '到达底部', action: () => this.scrollToBottom() },
+      { id: 'refresh', key: 'refresh', icon: '⟲', label: '刷新页面', action: () => this.refreshPage() },
+      { id: 'back', key: 'back', icon: '←', label: '后退', action: () => this.goBack() },
+      { id: 'forward', key: 'forward', icon: '→', label: '前进', action: () => this.goForward() },
+      { id: 'new-tab', key: 'newTab', icon: '⊞', label: '新标签页', action: () => this.newTab() },
+      { id: 'bookmark', key: 'bookmark', icon: '★', label: '添加书签', action: () => this.addBookmark() },
+      { id: 'settings', key: 'settings', icon: '⚙', label: '设置', action: () => this.openSettings() }
     ];
 
-    buttons.forEach((btn, index) => {
+    // 只创建启用的按钮
+    const enabledButtons = allButtons.filter(btn => this.settings.enabledButtons[btn.key]);
+    console.log('🔧 启用的按钮:', enabledButtons.map(btn => btn.label));
+
+    enabledButtons.forEach((btn, index) => {
       const button = this.createButton(btn.id, btn.icon, btn.label);
       button.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -134,7 +148,7 @@ class FloatingNavigation {
       });
       
       // 设置按钮位置（圆形均匀分布）
-      const angle = (index * (360 / buttons.length)) - 90; // 均匀分布，从顶部开始
+      const angle = (index * (360 / enabledButtons.length)) - 90; // 均匀分布，从顶部开始
       
       // 根据按钮大小调整半径
       let radius = 70; // 默认中号按钮半径
@@ -155,6 +169,20 @@ class FloatingNavigation {
       
       this.buttonGroup.appendChild(button);
     });
+    
+    console.log('🎯 创建的功能按钮数量:', enabledButtons.length);
+  }
+
+  // 重新创建功能按钮（用于设置更改时动态更新）
+  recreateFunctionButtons() {
+    // 清空现有的功能按钮
+    if (this.buttonGroup) {
+      this.buttonGroup.innerHTML = '';
+    }
+    
+    // 重新创建功能按钮
+    this.createFunctionButtons();
+    console.log('🔄 功能按钮已重新创建');
   }
 
   createButton(id, icon, title) {
@@ -365,12 +393,35 @@ class FloatingNavigation {
 
   // 更新设置
   updateSettings(newSettings) {
+    const oldSettings = { ...this.settings };
     this.settings = { ...this.settings, ...newSettings };
     this.saveSettings();
     
-    // 重新创建导航以应用新设置
-    this.createFloatingNav();
-    this.bindEvents();
+    console.log('🔄 设置已更新');
+    console.log('🔧 新设置:', this.settings);
+    
+    // 检查是否只是功能按钮设置发生了变化
+    const onlyButtonsChanged = newSettings.enabledButtons && 
+      Object.keys(newSettings).length === 1 && 
+      JSON.stringify(oldSettings.enabledButtons) !== JSON.stringify(newSettings.enabledButtons);
+    
+    if (onlyButtonsChanged) {
+      // 只重新创建功能按钮
+      console.log('⚡ 仅更新功能按钮');
+      this.recreateFunctionButtons();
+    } else {
+      // 完全重新创建导航界面
+      console.log('🔄 完整重新创建导航界面');
+      
+      // 移除旧的导航界面
+      if (this.container) {
+        this.container.remove();
+      }
+      
+      // 重新创建导航以应用新设置
+      this.createFloatingNav();
+      this.bindEvents();
+    }
   }
 }
 
