@@ -72,46 +72,102 @@ class PopupManager {
   }
 
   async executeAction(action) {
+    console.log('🚀 执行操作:', action);
+    
     try {
       // 获取当前活动标签页
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (!tab) return;
+      if (!tab) {
+        console.error('❌ 未找到活动标签页');
+        return;
+      }
+
+      console.log('📝 当前标签页:', tab.url);
 
       // 检查是否为特殊页面
       if (this.isSpecialUrl(tab.url)) {
-        console.log('当前页面不支持此操作');
+        console.log('⚠️ 当前页面不支持此操作:', tab.url);
+        // 显示用户友好的提示
+        this.showNotification('当前页面不支持此操作');
         return;
       }
 
       // 发送消息到content script
-      await chrome.tabs.sendMessage(tab.id, { action: action });
+      console.log('📨 发送消息到content script:', { action });
+      const response = await chrome.tabs.sendMessage(tab.id, { action: action });
+      console.log('✅ 操作执行成功:', response);
+      
     } catch (error) {
-      console.error('执行操作失败:', error);
+      console.error('❌ 执行操作失败:', error);
       
       // 如果content script未注入，尝试重新注入
-      try {
-        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-        await chrome.scripting.executeScript({
-          target: { tabId: tab.id },
-          files: ['content.js']
-        });
-        await chrome.scripting.insertCSS({
-          target: { tabId: tab.id },
-          files: ['styles.css']
-        });
+      if (error.message && error.message.includes('Could not establish connection')) {
+        console.log('🔧 尝试重新注入content script...');
         
-        // 重试操作
-        setTimeout(async () => {
-          try {
-            await chrome.tabs.sendMessage(tab.id, { action: action });
-          } catch (retryError) {
-            console.error('重试操作失败:', retryError);
-          }
-        }, 500);
-      } catch (injectError) {
-        console.error('注入脚本失败:', injectError);
+        try {
+          const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+          
+          // 注入content script和CSS
+          await chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            files: ['content.js']
+          });
+          
+          await chrome.scripting.insertCSS({
+            target: { tabId: tab.id },
+            files: ['styles.css']
+          });
+          
+          console.log('✅ Content script重新注入成功');
+          
+          // 等待一段时间后重试操作
+          setTimeout(async () => {
+            try {
+              console.log('🔄 重试操作:', action);
+              const response = await chrome.tabs.sendMessage(tab.id, { action: action });
+              console.log('✅ 重试操作成功:', response);
+            } catch (retryError) {
+              console.error('❌ 重试操作失败:', retryError);
+              this.showNotification('操作执行失败，请刷新页面后重试');
+            }
+          }, 1000); // 增加等待时间到1秒
+          
+        } catch (injectError) {
+          console.error('❌ 注入脚本失败:', injectError);
+          this.showNotification('脚本注入失败，请刷新页面后重试');
+        }
+      } else {
+        this.showNotification('操作执行失败');
       }
     }
+  }
+  
+  // 显示用户通知
+  showNotification(message) {
+    // 创建临时通知元素
+    const notification = document.createElement('div');
+    notification.textContent = message;
+    notification.style.cssText = `
+      position: fixed;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 0, 0, 0.8);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-size: 12px;
+      z-index: 9999;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // 3秒后自动移除
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.parentNode.removeChild(notification);
+      }
+    }, 3000);
   }
 
   async changeTheme(theme) {

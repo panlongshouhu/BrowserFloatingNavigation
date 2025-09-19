@@ -630,17 +630,62 @@ if (document.readyState === 'loading') {
   }, 1000);
 }
 
-// 监听来自background的消息
+// 监听来自background和popup的消息
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === 'updateSettings' && floatingNav) {
-    floatingNav.updateSettings(message.settings);
+  console.log('📨 收到消息:', message);
+  
+  if (!floatingNav) {
+    console.warn('⚠️ 悬浮导航未初始化');
+    return;
   }
-  if (message.action === 'changeTheme' && floatingNav) {
-    floatingNav.changeTheme(message.theme);
+  
+  switch (message.action) {
+    case 'updateSettings':
+      floatingNav.updateSettings(message.settings);
+      break;
+      
+    case 'changeTheme':
+      floatingNav.changeTheme(message.theme);
+      break;
+      
+    case 'completeWelcome':
+      floatingNav.completeWelcomeSetup();
+      break;
+      
+    // 处理来自popup的快捷操作
+    case 'toggleNav':
+      console.log('🎯 切换悬浮导航显示/隐藏');
+      if (floatingNav.container) {
+        const isVisible = floatingNav.container.style.display !== 'none';
+        floatingNav.container.style.display = isVisible ? 'none' : 'block';
+        sendResponse({ success: true, visible: !isVisible });
+      }
+      break;
+      
+    case 'scrollTop':
+      console.log('🎯 滚动到页面顶部');
+      floatingNav.scrollToTop();
+      sendResponse({ success: true });
+      break;
+      
+    case 'scrollBottom':
+      console.log('🎯 滚动到页面底部');
+      floatingNav.scrollToBottom();
+      sendResponse({ success: true });
+      break;
+      
+    case 'refresh':
+      console.log('🎯 刷新页面');
+      window.location.reload();
+      sendResponse({ success: true });
+      break;
+      
+    default:
+      console.warn('⚠️ 未知的消息action:', message.action);
+      sendResponse({ success: false, error: 'Unknown action' });
   }
-  if (message.action === 'completeWelcome' && floatingNav) {
-    floatingNav.completeWelcomeSetup();
-  }
+  
+  return true; // 保持消息通道开放，支持异步响应
 });
 
 // 页面卸载时清理资源
