@@ -38,6 +38,13 @@ class FloatingNavigation {
     await this.loadSettings();
     console.log('⚙️  设置已加载:', this.settings);
     
+    // 检查是否已完成欢迎设置，如果没有则不显示悬浮导航
+    if (this.settings.isWelcomeCompleted === false) {
+      console.log('👋 检测到首次安装，等待用户完成欢迎设置后再显示悬浮导航');
+      this.isInitialized = true;
+      return;
+    }
+    
     // 创建悬浮导航
     this.createFloatingNav();
     console.log('🎨 悬浮导航UI已创建');
@@ -391,6 +398,22 @@ class FloatingNavigation {
     this.saveSettings();
   }
 
+  // 完成欢迎设置，启动悬浮导航
+  async completeWelcomeSetup() {
+    console.log('🎉 用户完成欢迎设置，开始启动悬浮导航');
+    
+    // 更新欢迎完成标记
+    this.settings.isWelcomeCompleted = true;
+    await this.saveSettings();
+    
+    // 如果悬浮导航还没有初始化，现在创建它
+    if (!this.container) {
+      this.createFloatingNav();
+      this.bindEvents();
+      console.log('✅ 悬浮导航已启动！');
+    }
+  }
+
   // 更新设置
   updateSettings(newSettings) {
     const oldSettings = { ...this.settings };
@@ -457,5 +480,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   if (message.action === 'changeTheme' && floatingNav) {
     floatingNav.changeTheme(message.theme);
+  }
+  if (message.action === 'completeWelcome' && floatingNav) {
+    floatingNav.completeWelcomeSetup();
   }
 });

@@ -40,13 +40,37 @@
             </div>
         </div>
 
-        <nav class="tab-nav">
-            <button class="tab-btn active" data-tab="general">常规设置</button>
-            <button class="tab-btn" data-tab="appearance">外观主题</button>
-            <button class="tab-btn" data-tab="functions">功能按钮</button>
-            <button class="tab-btn" data-tab="shortcuts">快捷键</button>
-            <button class="tab-btn" data-tab="advanced">高级选项</button>
-        </nav>
+        <!-- 主要内容区域 -->
+        <div class="main-layout">
+            <!-- 左侧导航栏 -->
+            <nav class="sidebar-nav">
+                <div class="nav-title">设置导航</div>
+                <div class="nav-items">
+                    <button class="nav-item active" data-tab="general">
+                        <span class="nav-icon">⚙️</span>
+                        <span class="nav-text">常规设置</span>
+                    </button>
+                    <button class="nav-item" data-tab="appearance">
+                        <span class="nav-icon">🎨</span>
+                        <span class="nav-text">外观主题</span>
+                    </button>
+                    <button class="nav-item" data-tab="functions">
+                        <span class="nav-icon">🔧</span>
+                        <span class="nav-text">功能按钮</span>
+                    </button>
+                    <button class="nav-item" data-tab="shortcuts">
+                        <span class="nav-icon">⌨️</span>
+                        <span class="nav-text">快捷键</span>
+                    </button>
+                    <button class="nav-item" data-tab="advanced">
+                        <span class="nav-icon">🔬</span>
+                        <span class="nav-text">高级选项</span>
+                    </button>
+                </div>
+            </nav>
+
+            <!-- 右侧内容区域 -->
+            <div class="content-area">
 
         <!-- 常规设置 -->
         <div id="general-tab" class="tab-content active">
@@ -366,6 +390,8 @@
                 </div>
             </div>
         </div>
+            </div> <!-- 关闭 content-area -->
+        </div> <!-- 关闭 main-layout -->
 
         <!-- 状态提示 -->
         <div id="status-message" class="status-message hidden">

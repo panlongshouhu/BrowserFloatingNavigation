@@ -27,22 +27,49 @@ class OptionsManager {
 
   showWelcome() {
     const welcomeSection = document.getElementById('welcome-section');
-    const tabNav = document.querySelector('.tab-nav');
-    const tabContents = document.querySelectorAll('.tab-content');
+    const mainLayout = document.querySelector('.main-layout');
     
     welcomeSection.classList.remove('hidden');
-    tabNav.style.display = 'none';
-    tabContents.forEach(content => content.style.display = 'none');
+    if (mainLayout) {
+      mainLayout.style.display = 'none';
+    }
   }
 
   hideWelcome() {
     const welcomeSection = document.getElementById('welcome-section');
-    const tabNav = document.querySelector('.tab-nav');
-    const tabContents = document.querySelectorAll('.tab-content');
+    const mainLayout = document.querySelector('.main-layout');
     
     welcomeSection.classList.add('hidden');
-    tabNav.style.display = 'flex';
+    if (mainLayout) {
+      mainLayout.style.display = 'flex';
+    }
     document.getElementById('general-tab').style.display = 'block';
+  }
+
+  async completeWelcomeSetup() {
+    try {
+      console.log('🎉 用户点击开始设置，完成欢迎流程');
+      
+      // 隐藏欢迎页面
+      this.hideWelcome();
+      
+      // 更新设置中的欢迎完成标记
+      this.settings.isWelcomeCompleted = true;
+      await this.saveSettings();
+      
+      // 通知background script完成欢迎设置
+      chrome.runtime.sendMessage({ 
+        action: 'completeWelcome'
+      });
+      
+      // 显示成功消息
+      this.showStatus('欢迎设置完成，悬浮导航已启用！', 'success');
+      
+      console.log('✅ 欢迎设置流程完成');
+    } catch (error) {
+      console.error('完成欢迎设置失败:', error);
+      this.showStatus('设置失败，请重试', 'error');
+    }
   }
 
   async loadSettings() {
@@ -63,6 +90,7 @@ class OptionsManager {
       showLabels: true,
       buttonSize: 'medium',
       theme: 'default',
+      isWelcomeCompleted: true, // 在设置页面中默认为已完成
       enabledButtons: {
         scrollTop: true,
         scrollBottom: true,
@@ -82,6 +110,9 @@ class OptionsManager {
   }
 
   initializeUI() {
+    // 初始化标签页显示状态
+    this.initializeTabState();
+    
     // 常规设置
     document.getElementById('enableAnimation').checked = this.settings.enableAnimation;
     document.getElementById('showLabels').checked = this.settings.showLabels;
@@ -98,6 +129,35 @@ class OptionsManager {
     
     // 快捷键设置
     this.updateShortcuts();
+  }
+
+  initializeTabState() {
+    console.log('🔧 初始化标签页状态');
+    
+    // 确保所有标签页内容都被隐藏
+    document.querySelectorAll('.tab-content').forEach(content => {
+      content.classList.remove('active');
+      content.style.display = 'none';
+    });
+    
+    // 确保所有导航项都不是激活状态
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.classList.remove('active');
+    });
+    
+    // 显示默认标签页（常规设置）
+    const defaultTab = 'general';
+    const defaultNavItem = document.querySelector(`[data-tab="${defaultTab}"]`);
+    const defaultContent = document.getElementById(`${defaultTab}-tab`);
+    
+    if (defaultNavItem && defaultContent) {
+      defaultNavItem.classList.add('active');
+      defaultContent.classList.add('active');
+      defaultContent.style.display = 'block';
+      console.log('✅ 默认标签页已激活:', defaultTab);
+    } else {
+      console.error('❌ 无法找到默认标签页元素');
+    }
   }
 
   updatePositionButtons() {
@@ -168,13 +228,25 @@ class OptionsManager {
   bindEvents() {
     // 欢迎页面开始按钮
     document.getElementById('start-setup')?.addEventListener('click', () => {
-      this.hideWelcome();
+      this.completeWelcomeSetup();
     });
 
     // 标签切换
-    document.querySelectorAll('.tab-btn').forEach(btn => {
+    document.querySelectorAll('.nav-item').forEach(btn => {
       btn.addEventListener('click', (e) => {
-        this.switchTab(e.target.dataset.tab);
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // 确保获取到正确的 data-tab 值
+        const navItem = e.target.closest('.nav-item');
+        const tabName = navItem ? navItem.dataset.tab : null;
+        
+        if (tabName) {
+          console.log('切换到标签页:', tabName);
+          this.switchTab(tabName);
+        } else {
+          console.error('未找到标签页名称');
+        }
       });
     });
 
@@ -255,17 +327,42 @@ class OptionsManager {
   }
 
   switchTab(tabName) {
-    // 更新标签按钮
-    document.querySelectorAll('.tab-btn').forEach(btn => {
+    console.log('🔄 开始切换标签页到:', tabName);
+    
+    // 更新导航项
+    document.querySelectorAll('.nav-item').forEach(btn => {
       btn.classList.remove('active');
     });
-    document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+    
+    const activeNavItem = document.querySelector(`[data-tab="${tabName}"]`);
+    if (activeNavItem) {
+      activeNavItem.classList.add('active');
+      console.log('✅ 导航项已激活:', tabName);
+    } else {
+      console.error('❌ 未找到导航项:', tabName);
+    }
 
-    // 更新内容区域
-    document.querySelectorAll('.tab-content').forEach(content => {
+    // 更新内容区域 - 先隐藏所有内容
+    const allTabContents = document.querySelectorAll('.tab-content');
+    console.log('📋 找到标签内容数量:', allTabContents.length);
+    
+    allTabContents.forEach((content, index) => {
       content.classList.remove('active');
+      content.style.display = 'none'; // 强制隐藏
+      console.log(`🔒 隐藏标签页 ${index + 1}: ${content.id}`);
     });
-    document.getElementById(`${tabName}-tab`).classList.add('active');
+    
+    // 显示当前标签页内容
+    const currentTabContent = document.getElementById(`${tabName}-tab`);
+    if (currentTabContent) {
+      currentTabContent.classList.add('active');
+      currentTabContent.style.display = 'block'; // 强制显示
+      console.log('✅ 显示当前标签页内容:', `${tabName}-tab`);
+    } else {
+      console.error('❌ 未找到标签页内容:', `${tabName}-tab`);
+    }
+    
+    console.log('🎯 标签页切换完成');
   }
 
   setPosition(position) {

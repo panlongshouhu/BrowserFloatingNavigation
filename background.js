@@ -88,6 +88,7 @@ class BackgroundService {
         showLabels: true,
         buttonSize: 'medium',
         theme: 'default',
+        isWelcomeCompleted: false, // 标记用户是否已完成欢迎设置
         enabledButtons: {
           scrollTop: true,
           scrollBottom: true,
@@ -150,6 +151,10 @@ class BackgroundService {
           
         case 'importSettings':
           await this.importSettings(message.settings);
+          break;
+          
+        case 'completeWelcome':
+          await this.completeWelcomeSetup();
           break;
           
         default:
@@ -349,6 +354,42 @@ class BackgroundService {
       console.log(`✅ 主题更新已应用到 ${themeUpdateCount} 个标签页`);
     } catch (error) {
       console.error('更改主题失败:', error);
+    }
+  }
+
+  async completeWelcomeSetup() {
+    try {
+      console.log('🎉 用户完成欢迎设置，启用悬浮导航');
+      
+      // 获取当前设置
+      const currentSettings = await this.getSettings();
+      
+      // 更新欢迎完成标记
+      currentSettings.isWelcomeCompleted = true;
+      
+      // 保存设置
+      await this.saveSettings(currentSettings);
+      
+      // 通知所有标签页完成欢迎设置
+      const tabs = await chrome.tabs.query({});
+      let welcomeCompleteCount = 0;
+      
+      for (const tab of tabs) {
+        if (tab.url && !this.isSpecialUrl(tab.url)) {
+          try {
+            await chrome.tabs.sendMessage(tab.id, {
+              action: 'completeWelcome'
+            });
+            welcomeCompleteCount++;
+          } catch (error) {
+            // 静默忽略无法发送消息的标签页
+          }
+        }
+      }
+      
+      console.log(`✅ 欢迎设置完成通知已发送到 ${welcomeCompleteCount} 个标签页`);
+    } catch (error) {
+      console.error('完成欢迎设置失败:', error);
     }
   }
 
