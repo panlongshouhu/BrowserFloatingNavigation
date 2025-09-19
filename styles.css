@@ -112,6 +112,11 @@
   /* 移除图标缩放，避免位置变化 */
 }
 
+.floating-nav-button.main {
+  cursor: grab;
+  user-select: none;
+}
+
 .floating-nav-button.main .button-icon {
   font-size: 26px;
   font-weight: 900;
@@ -626,4 +631,34 @@
   line-height: 1 !important;
   color: inherit !important;
   text-align: center !important;
+}
+
+/* 拖拽相关样式 */
+.floating-nav-container {
+  transition: opacity 0.2s ease;
+}
+
+/* 拖拽时的样式 */
+.floating-nav-container.dragging {
+  opacity: 0.8;
+  z-index: 999999;
+}
+
+/* 主按钮拖拽样式 */
+.floating-nav-button.main:active {
+  transform: scale(0.95);
+}
+
+/* 优化悬停交互 */
+.floating-nav-container:hover {
+  z-index: 100001;
+}
+
+/* 确保拖拽时不被其他元素干扰 */
+.floating-nav-container.dragging * {
+  pointer-events: none;
+}
+
+.floating-nav-container.dragging .floating-nav-button.main {
+  pointer-events: auto;
 }

@@ -203,23 +203,53 @@ class FloatingNavigation {
   }
 
   bindEvents() {
-    // 主按钮点击事件
-    this.mainButton.addEventListener('click', (e) => {
-      e.stopPropagation();
-      this.toggleButtons();
+    // 初始化隐藏定时器
+    this.hideTimer = null;
+    
+    // 鼠标悬停显示菜单 - 智能悬停检测
+    this.container.addEventListener('mouseenter', (e) => {
+      if (!this.isDragging) {
+        this.clearHideTimer();
+        this.showButtons();
+      }
     });
+
+    // 鼠标离开时延迟隐藏菜单
+    this.container.addEventListener('mouseleave', (e) => {
+      if (!this.isDragging) {
+        this.scheduleHideButtons();
+      }
+    });
+    
+    // 全局鼠标移动检测 - 使用节流避免过度检查
+    this.lastMouseCheck = 0;
+    this.globalMouseMoveHandler = (e) => {
+      if (this.isDragging) return;
+      
+      // 节流：每50ms检查一次，提高性能
+      const now = Date.now();
+      if (now - this.lastMouseCheck < 50) return;
+      this.lastMouseCheck = now;
+      
+      const isOverFloatingNav = this.isMouseOverFloatingNav(e.clientX, e.clientY);
+      
+      if (isOverFloatingNav) {
+        this.clearHideTimer();
+        this.showButtons();
+      } else if (this.container.classList.contains('expanded')) {
+        this.scheduleHideButtons();
+      }
+    };
+    
+    // 添加全局鼠标移动监听
+    document.addEventListener('mousemove', this.globalMouseMoveHandler);
 
     // 拖拽事件
     this.mainButton.addEventListener('mousedown', (e) => {
       if (e.button === 0) { // 左键
+        e.preventDefault();
+        e.stopPropagation();
         this.startDrag(e);
-      }
-    });
-
-    // 全局点击事件（隐藏按钮组）
-    document.addEventListener('click', (e) => {
-      if (!this.container.contains(e.target)) {
-        this.hideButtons();
       }
     });
 
@@ -235,17 +265,87 @@ class FloatingNavigation {
       window.scrollBy(0, delta);
     });
   }
+  
+  // 检查鼠标是否在悬浮导航区域内（包括功能按钮）
+  isMouseOverFloatingNav(mouseX, mouseY) {
+    const containerRect = this.container.getBoundingClientRect();
+    const margin = 10; // 给一些边距容错
+    
+    // 检查主按钮区域
+    const mainButtonRect = {
+      left: containerRect.left - margin,
+      right: containerRect.right + margin,
+      top: containerRect.top - margin,
+      bottom: containerRect.bottom + margin
+    };
+    
+    if (mouseX >= mainButtonRect.left && mouseX <= mainButtonRect.right &&
+        mouseY >= mainButtonRect.top && mouseY <= mainButtonRect.bottom) {
+      return true;
+    }
+    
+    // 如果菜单展开，检查功能按钮区域
+    if (this.container.classList.contains('expanded')) {
+      const buttons = this.buttonGroup.querySelectorAll('.floating-nav-button');
+      for (const button of buttons) {
+        const buttonRect = button.getBoundingClientRect();
+        if (mouseX >= buttonRect.left - margin && mouseX <= buttonRect.right + margin &&
+            mouseY >= buttonRect.top - margin && mouseY <= buttonRect.bottom + margin) {
+          return true;
+        }
+      }
+    }
+    
+    return false;
+  }
+  
+  // 清除隐藏定时器
+  clearHideTimer() {
+    if (this.hideTimer) {
+      clearTimeout(this.hideTimer);
+      this.hideTimer = null;
+    }
+  }
+  
+  // 安排延迟隐藏菜单
+  scheduleHideButtons() {
+    this.clearHideTimer();
+    this.hideTimer = setTimeout(() => {
+      this.hideButtons();
+      this.hideTimer = null;
+    }, 300); // 300ms延迟，给用户足够时间移动鼠标
+  }
 
   startDrag(e) {
     this.isDragging = true;
+    
+    // 检查菜单是否显示，如果显示则隐藏
+    const isMenuVisible = this.buttonGroup.style.display !== 'none' && 
+                         this.container.classList.contains('expanded');
+    if (isMenuVisible) {
+      this.hideButtons();
+    }
+    
+    // 获取容器的实际位置
+    const rect = this.container.getBoundingClientRect();
+    
+    // 计算鼠标点击位置相对于容器左上角的偏移
     this.dragOffset = {
-      x: e.clientX - this.container.offsetLeft,
-      y: e.clientY - this.container.offsetTop
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
     };
+    
+    // 添加拖拽样式
+    this.container.classList.add('dragging');
+    this.container.style.cursor = 'grabbing';
+    this.container.style.transition = 'none';
+    
+    console.log('🖱️ 开始拖拽，偏移量:', this.dragOffset);
 
     const mouseMoveHandler = (e) => {
       if (!this.isDragging) return;
       
+      // 计算新位置（鼠标位置减去偏移量）
       const newX = e.clientX - this.dragOffset.x;
       const newY = e.clientY - this.dragOffset.y;
       
@@ -256,20 +356,40 @@ class FloatingNavigation {
       const constrainedX = Math.max(0, Math.min(newX, maxX));
       const constrainedY = Math.max(0, Math.min(newY, maxY));
       
+      // 直接设置位置，提高响应速度
       this.container.style.left = constrainedX + 'px';
       this.container.style.top = constrainedY + 'px';
+      
+      // 更新设置中的位置（实时更新，避免丢失）
+      this.settings.position = {
+        x: constrainedX,
+        y: constrainedY
+      };
     };
 
     const mouseUpHandler = () => {
       this.isDragging = false;
-      this.settings.position = {
-        x: parseInt(this.container.style.left),
-        y: parseInt(this.container.style.top)
-      };
+      
+      // 恢复样式
+      this.container.classList.remove('dragging');
+      this.container.style.cursor = '';
+      this.container.style.transition = '';
+      
+      // 保存最终位置
       this.saveSettings();
       
+      console.log('🖱️ 拖拽结束，最终位置:', this.settings.position);
+      
+      // 移除事件监听器
       document.removeEventListener('mousemove', mouseMoveHandler);
       document.removeEventListener('mouseup', mouseUpHandler);
+      
+      // 拖拽结束后，使用浏览器原生的hover检测
+      setTimeout(() => {
+        if (this.container.matches(':hover')) {
+          this.showButtons();
+        }
+      }, 100);
     };
 
     document.addEventListener('mousemove', mouseMoveHandler);
@@ -286,26 +406,65 @@ class FloatingNavigation {
   }
 
   showButtons() {
+    // 清除任何待隐藏的定时器
+    this.clearHideTimer();
+    
+    // 防止重复显示
+    if (this.container.classList.contains('expanded')) {
+      return;
+    }
+    
     this.buttonGroup.style.display = 'block';
     this.container.classList.add('expanded');
     
-    // 按钮展开动画
+    console.log('📱 显示菜单按钮');
+    
+    // 按钮展开动画 - 更快的动画速度
     const buttons = this.buttonGroup.querySelectorAll('.floating-nav-button');
     buttons.forEach((button, index) => {
       setTimeout(() => {
         button.classList.add('show');
-      }, index * 50);
+      }, index * 30); // 从50ms减少到30ms，更快的展开
     });
   }
 
   hideButtons() {
+    // 清除隐藏定时器
+    this.clearHideTimer();
+    
+    // 防止重复隐藏
+    if (!this.container.classList.contains('expanded')) {
+      return;
+    }
+    
+    console.log('📱 隐藏菜单按钮');
+    
     const buttons = this.buttonGroup.querySelectorAll('.floating-nav-button');
     buttons.forEach(button => button.classList.remove('show'));
     
+    // 更快的隐藏动画
     setTimeout(() => {
       this.buttonGroup.style.display = 'none';
       this.container.classList.remove('expanded');
-    }, 200);
+    }, 150); // 从200ms减少到150ms
+  }
+  
+  // 销毁悬浮导航，清理事件监听器
+  destroy() {
+    console.log('🗑️ 销毁悬浮导航，清理资源');
+    
+    // 清除定时器
+    this.clearHideTimer();
+    
+    // 移除全局事件监听器
+    if (this.globalMouseMoveHandler) {
+      document.removeEventListener('mousemove', this.globalMouseMoveHandler);
+    }
+    
+    // 移除容器
+    if (this.container && this.container.parentNode) {
+      this.container.parentNode.removeChild(this.container);
+    }
   }
 
   adjustPositionToScreen(position) {
@@ -481,5 +640,20 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   if (message.action === 'completeWelcome' && floatingNav) {
     floatingNav.completeWelcomeSetup();
+  }
+});
+
+// 页面卸载时清理资源
+window.addEventListener('beforeunload', () => {
+  if (floatingNav) {
+    floatingNav.destroy();
+  }
+});
+
+// 页面隐藏时也清理（用户切换标签页或最小化窗口）
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && floatingNav) {
+    // 页面被隐藏时，清除定时器，避免无效操作
+    floatingNav.clearHideTimer();
   }
 });
