@@ -66,6 +66,14 @@
                         <span class="nav-icon">🔬</span>
                         <span class="nav-text">高级选项</span>
                     </button>
+                    <button class="nav-item" data-tab="about">
+                        <span class="nav-icon">ℹ️</span>
+                        <span class="nav-text">关于软件</span>
+                    </button>
+                    <button class="nav-item" data-tab="contact">
+                        <span class="nav-icon">📞</span>
+                        <span class="nav-text">联系作者</span>
+                    </button>
                 </div>
             </nav>
 
@@ -368,16 +376,135 @@
                     </div>
                 </div>
 
-                <div class="section">
-                    <h3>关于扩展</h3>
-                    <div class="about-info">
-                        <p><strong>版本：</strong><span id="version">1.0.0</span></p>
-                        <p><strong>作者：</strong>盘龙守护</p>
-                        <p><strong>更新：</strong>2025年最新版本</p>
-                        <div class="links">
-                            <a href="#" class="link">🐛 反馈问题</a>
-                            <a href="#" class="link">⭐ 评价扩展</a>
-                            <a href="#" class="link">📖 使用帮助</a>
+            </div>
+        </div>
+
+        <!-- 关于软件 -->
+        <div id="about-tab" class="tab-content">
+            <div class="section">
+                <h3>关于悬浮导航</h3>
+                <div class="about-info">
+                    <div class="about-header">
+                        <div class="about-logo">
+                            <span class="logo-icon">⊕</span>
+                        </div>
+                        <div class="about-details">
+                            <h4>悬浮导航</h4>
+                            <p class="about-desc">便捷的浏览器悬浮导航工具</p>
+                        </div>
+                    </div>
+                    
+                    <div class="version-info">
+                        <div class="info-item">
+                            <span class="info-label">版本</span>
+                            <span id="version" class="info-value">1.0.0</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">作者</span>
+                            <span class="info-value">盘龙守护</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">更新</span>
+                            <span class="info-value">2025年最新版本</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">许可</span>
+                            <span class="info-value">MIT License</span>
+                        </div>
+                    </div>
+
+                    <div class="feature-list">
+                        <h4>主要功能</h4>
+                        <ul>
+                            <li>🎯 可拖拽的悬浮按钮</li>
+                            <li>⚡ 丰富的快捷操作</li>
+                            <li>🎨 多样的主题皮肤</li>
+                            <li>⚙️ 灵活的自定义设置</li>
+                            <li>📱 响应式界面设计</li>
+                            <li>🚀 轻量级高性能</li>
+                        </ul>
+                    </div>
+
+                    <div class="links">
+                        <a href="#" class="link">🐛 反馈问题</a>
+                        <a href="#" class="link">⭐ 评价扩展</a>
+                        <a href="#" class="link">📖 使用帮助</a>
+                        <a href="#" class="link">🔄 检查更新</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 联系作者 -->
+        <div id="contact-tab" class="tab-content">
+            <div class="section">
+                <h3>联系作者</h3>
+                <div class="contact-info">
+                    <div class="contact-intro">
+                        <p>👋 欢迎联系我们！如果您有任何问题、建议或反馈，请通过以下方式与我们联系。</p>
+                    </div>
+
+                    <!-- QQ群和微信群 -->
+                    <div class="contact-group">
+                        <h4>📱 加入群聊</h4>
+                        <div class="qr-codes">
+                            <div class="qr-item">
+                                <div class="qr-placeholder">
+                                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150' viewBox='0 0 150 150'%3E%3Crect width='150' height='150' fill='%23f0f0f0' stroke='%23ccc' stroke-dasharray='5,5'/%3E%3Ctext x='75' y='75' text-anchor='middle' dy='0.35em' font-family='Arial' font-size='12' fill='%23999'%3EQQ群二维码%3C/text%3E%3C/svg%3E" alt="QQ群二维码" />
+                                </div>
+                                <p class="qr-label">QQ交流群</p>
+                                <p class="qr-desc">扫码加入QQ群聊</p>
+                            </div>
+                            <div class="qr-item">
+                                <div class="qr-placeholder">
+                                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150' viewBox='0 0 150 150'%3E%3Crect width='150' height='150' fill='%23f0f0f0' stroke='%23ccc' stroke-dasharray='5,5'/%3E%3Ctext x='75' y='75' text-anchor='middle' dy='0.35em' font-family='Arial' font-size='12' fill='%23999'%3E微信群二维码%3C/text%3E%3C/svg%3E" alt="微信群二维码" />
+                                </div>
+                                <p class="qr-label">微信交流群</p>
+                                <p class="qr-desc">扫码加入微信群聊</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 打赏支持 -->
+                    <div class="contact-group">
+                        <h4>☕ 请作者喝杯咖啡吧</h4>
+                        <p class="support-text">如果这个扩展对您有帮助，欢迎请作者喝杯咖啡，支持我们继续开发更好的功能！</p>
+                        <div class="payment-codes">
+                            <div class="payment-item">
+                                <div class="payment-placeholder">
+                                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Crect width='120' height='120' fill='%23e8f5e8' stroke='%234caf50' stroke-dasharray='3,3'/%3E%3Ctext x='60' y='55' text-anchor='middle' dy='0.35em' font-family='Arial' font-size='10' fill='%234caf50'%3E微信收款码%3C/text%3E%3Ctext x='60' y='70' text-anchor='middle' dy='0.35em' font-family='Arial' font-size='8' fill='%23666'%3E扫码支付%3C/text%3E%3C/svg%3E" alt="微信收款码" />
+                                </div>
+                                <p class="payment-label">💚 微信支付</p>
+                            </div>
+                            <div class="payment-item">
+                                <div class="payment-placeholder">
+                                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Crect width='120' height='120' fill='%23e8f4fd' stroke='%232196f3' stroke-dasharray='3,3'/%3E%3Ctext x='60' y='55' text-anchor='middle' dy='0.35em' font-family='Arial' font-size='10' fill='%232196f3'%3E支付宝收款码%3C/text%3E%3Ctext x='60' y='70' text-anchor='middle' dy='0.35em' font-family='Arial' font-size='8' fill='%23666'%3E扫码支付%3C/text%3E%3C/svg%3E" alt="支付宝收款码" />
+                                </div>
+                                <p class="payment-label">💙 支付宝</p>
+                            </div>
+                            <div class="payment-item">
+                                <div class="payment-placeholder">
+                                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Crect width='120' height='120' fill='%23fff3e0' stroke='%23ff9800' stroke-dasharray='3,3'/%3E%3Ctext x='60' y='55' text-anchor='middle' dy='0.35em' font-family='Arial' font-size='10' fill='%23ff9800'%3EQQ收款码%3C/text%3E%3Ctext x='60' y='70' text-anchor='middle' dy='0.35em' font-family='Arial' font-size='8' fill='%23666'%3E扫码支付%3C/text%3E%3C/svg%3E" alt="QQ收款码" />
+                                </div>
+                                <p class="payment-label">🧡 QQ钱包</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 联系方式 -->
+                    <div class="contact-group">
+                        <h4>📧 其他联系方式</h4>
+                        <div class="contact-methods">
+                            <div class="contact-method">
+                                <span class="method-icon">📧</span>
+                                <span class="method-label">邮箱</span>
+                                <span class="method-value">support@floating-nav.com</span>
+                            </div>
+                            <div class="contact-method">
+                                <span class="method-icon">🐛</span>
+                                <span class="method-label">GitHub</span>
+                                <span class="method-value">github.com/floating-nav</span>
+                            </div>
                         </div>
                     </div>
                 </div>

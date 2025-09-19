@@ -802,3 +802,266 @@ body {
         min-width: 100%;
     }
 }
+
+/* 关于软件页面样式 */
+.about-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 15px;
+    color: white;
+}
+
+.about-logo {
+    margin-right: 20px;
+}
+
+.logo-icon {
+    font-size: 3em;
+    display: block;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.about-details h4 {
+    font-size: 1.8em;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.about-desc {
+    font-size: 1.1em;
+    opacity: 0.9;
+}
+
+.version-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border-left: 4px solid #667eea;
+}
+
+.info-label {
+    font-weight: 600;
+    color: #333;
+}
+
+.info-value {
+    color: #667eea;
+    font-weight: 500;
+}
+
+.feature-list {
+    margin-bottom: 30px;
+}
+
+.feature-list h4 {
+    margin-bottom: 15px;
+    color: #333;
+    font-size: 1.3em;
+}
+
+.feature-list ul {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 10px;
+}
+
+.feature-list li {
+    padding: 10px 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 3px solid #4caf50;
+}
+
+/* 联系作者页面样式 */
+.contact-info {
+    max-width: 800px;
+}
+
+.contact-intro {
+    margin-bottom: 30px;
+    padding: 20px;
+    background: #e3f2fd;
+    border-radius: 10px;
+    border-left: 4px solid #2196f3;
+}
+
+.contact-group {
+    margin-bottom: 40px;
+}
+
+.contact-group h4 {
+    margin-bottom: 20px;
+    color: #333;
+    font-size: 1.3em;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #eee;
+}
+
+/* QQ群和微信群二维码 */
+.qr-codes {
+    display: flex;
+    gap: 30px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 20px 0;
+}
+
+.qr-item {
+    text-align: center;
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.qr-item:hover {
+    transform: translateY(-5px);
+}
+
+.qr-placeholder {
+    margin-bottom: 15px;
+}
+
+.qr-placeholder img {
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.qr-label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.qr-desc {
+    color: #666;
+    font-size: 0.9em;
+}
+
+/* 打赏支持 */
+.support-text {
+    text-align: center;
+    margin-bottom: 25px;
+    padding: 15px;
+    background: #fff3e0;
+    border-radius: 10px;
+    color: #e65100;
+    border-left: 4px solid #ff9800;
+}
+
+.payment-codes {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 20px 0;
+}
+
+.payment-item {
+    text-align: center;
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+    min-width: 150px;
+}
+
+.payment-item:hover {
+    transform: translateY(-3px);
+}
+
+.payment-placeholder {
+    margin-bottom: 10px;
+}
+
+.payment-placeholder img {
+    border-radius: 8px;
+}
+
+.payment-label {
+    font-weight: 600;
+    color: #333;
+    font-size: 0.9em;
+}
+
+/* 联系方式 */
+.contact-methods {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.contact-method {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    gap: 15px;
+}
+
+.method-icon {
+    font-size: 1.5em;
+    width: 40px;
+    text-align: center;
+}
+
+.method-label {
+    font-weight: 600;
+    color: #333;
+    min-width: 80px;
+}
+
+.method-value {
+    color: #667eea;
+    font-family: monospace;
+    background: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    border: 1px solid #e1e5e9;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .about-header {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .about-logo {
+        margin-right: 0;
+        margin-bottom: 15px;
+    }
+    
+    .qr-codes,
+    .payment-codes {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .contact-method {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .method-label {
+        min-width: auto;
+    }
+}
