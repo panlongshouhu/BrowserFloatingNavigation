@@ -72,13 +72,14 @@ class FloatingNavigation {
     // 创建主容器
     this.container = document.createElement('div');
     this.container.id = 'floating-navigation';
-    this.container.className = `floating-nav-container theme-${this.settings.theme}`;
+    this.container.className = `floating-nav-container theme-${this.settings.theme} size-${this.settings.buttonSize}`;
     
     // 设置初始位置，确保在屏幕范围内
     const adjustedPosition = this.adjustPositionToScreen(this.settings.position);
     this.container.style.left = adjustedPosition.x + 'px';
     this.container.style.top = adjustedPosition.y + 'px';
     console.log('📍 设置位置:', adjustedPosition);
+    console.log('📏 按钮大小:', this.settings.buttonSize);
 
     // 创建主按钮
     this.mainButton = this.createButton('main', '⊕', '悬浮导航');
@@ -134,7 +135,15 @@ class FloatingNavigation {
       
       // 设置按钮位置（圆形均匀分布）
       const angle = (index * (360 / buttons.length)) - 90; // 均匀分布，从顶部开始
-      const radius = 70; // 增大半径避免重叠
+      
+      // 根据按钮大小调整半径
+      let radius = 70; // 默认中号按钮半径
+      if (this.settings.buttonSize === 'small') {
+        radius = 55;
+      } else if (this.settings.buttonSize === 'large') {
+        radius = 85;
+      }
+      
       const radian = (angle * Math.PI) / 180;
       const x = Math.cos(radian) * radius;
       const y = Math.sin(radian) * radius;
@@ -150,7 +159,7 @@ class FloatingNavigation {
 
   createButton(id, icon, title) {
     const button = document.createElement('div');
-    button.className = `floating-nav-button ${id}`;
+    button.className = `floating-nav-button ${id} size-${this.settings.buttonSize}`;
     button.innerHTML = `
       <span class="button-icon">${icon}</span>
       ${this.settings.showLabels ? `<span class="button-label">${title}</span>` : ''}

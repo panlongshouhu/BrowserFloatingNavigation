@@ -192,6 +192,7 @@ class OptionsManager {
     document.getElementById('buttonSize').addEventListener('change', (e) => {
       this.settings.buttonSize = e.target.value;
       this.saveSettings();
+      this.showStatus(`按钮大小已更改为: ${e.target.value}`, 'success');
     });
 
     // 位置设置
