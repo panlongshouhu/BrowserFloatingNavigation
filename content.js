@@ -129,19 +129,23 @@ class FloatingNavigation {
     
     this.container.appendChild(this.buttonGroup);
     
-    // 确保body存在再添加
+    // 确保body存在再添加 - 快速添加策略
     if (document.body) {
       document.body.appendChild(this.container);
-      console.log('✅ 悬浮导航已添加到页面！');
+      console.log('✅ 悬浮导航已立即添加到页面！');
     } else {
-      console.error('❌ document.body不存在，无法添加悬浮导航');
-      // 等待body加载
-      document.addEventListener('DOMContentLoaded', () => {
+      console.log('⏳ document.body未就绪，使用快速轮询...');
+      // 使用快速轮询而不是等待DOMContentLoaded，更快响应
+      const addToBody = () => {
         if (document.body) {
           document.body.appendChild(this.container);
-          console.log('✅ 悬浮导航已延迟添加到页面！');
+          console.log('✅ 悬浮导航已快速添加到页面！');
+        } else {
+          // 每10ms检查一次，直到body可用
+          setTimeout(addToBody, 10);
         }
-      });
+      };
+      addToBody();
     }
   }
 
@@ -720,16 +724,16 @@ function initializeFloatingNav() {
   }
 }
 
-// 确保页面完全加载后再初始化
+// 快速初始化悬浮导航
 if (document.readyState === 'loading') {
   console.log('⏳ 页面正在加载，等待DOMContentLoaded...');
   document.addEventListener('DOMContentLoaded', () => {
-    console.log('✅ DOMContentLoaded触发，延迟1秒初始化...');
-    setTimeout(initializeFloatingNav, 1000); // 延迟1秒确保页面稳定
+    console.log('✅ DOMContentLoaded触发，立即初始化...');
+    initializeFloatingNav(); // 立即初始化，无延迟
   });
 } else {
-  console.log('✅ 页面已加载完成，延迟1秒初始化...');
-  setTimeout(initializeFloatingNav, 1000);
+  console.log('✅ 页面已加载完成，立即初始化...');
+  initializeFloatingNav(); // 立即初始化，无延迟
 }
 
 // 消息处理函数
