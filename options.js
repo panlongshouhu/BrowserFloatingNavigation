@@ -90,6 +90,7 @@ class OptionsManager {
       buttonSize: 80, // 改为百分比数值，80%
       buttonOpacity: 90, // 新增透明度设置，90%
       theme: 'default',
+      customColor: '#3b82f6', // 自定义主题颜色
       isWelcomeCompleted: true, // 在设置页面中默认为已完成
       enabledButtons: {
         scrollTop: true,
@@ -133,6 +134,9 @@ class OptionsManager {
     
     // 主题设置
     this.updateThemeSelection();
+    
+    // 自定义颜色设置
+    this.initializeCustomColor();
     
     // 功能按钮设置
     this.updateFunctionButtons();
@@ -317,6 +321,9 @@ class OptionsManager {
         this.changeTheme(theme);
       });
     });
+
+    // 自定义颜色事件
+    this.bindCustomColorEvents();
 
     // 功能按钮设置
     Object.keys(this.settings.enabledButtons).forEach(key => {
@@ -575,6 +582,107 @@ class OptionsManager {
     if (versionElement) {
       versionElement.textContent = chrome.runtime.getManifest().version;
     }
+  }
+
+  // 自定义颜色功能
+  initializeCustomColor() {
+    const customColorInput = document.getElementById('customColor');
+    const customColorValue = document.getElementById('customColorValue');
+    
+    if (customColorInput && customColorValue) {
+      customColorInput.value = this.settings.customColor || '#3b82f6';
+      customColorValue.textContent = this.settings.customColor || '#3b82f6';
+    }
+  }
+
+  applyCustomColor() {
+    const customColor = document.getElementById('customColor').value;
+    
+    // 保存自定义颜色
+    this.settings.customColor = customColor;
+    this.settings.theme = 'custom';
+    
+    this.saveSettings();
+    this.updateThemeSelection();
+    
+    // 通知content script应用自定义颜色
+    chrome.runtime.sendMessage({
+      action: 'applyCustomColor',
+      color: customColor
+    });
+    
+    this.showStatus(`已应用自定义颜色: ${customColor}`, 'success');
+  }
+
+  resetCustomColor() {
+    const defaultColor = '#3b82f6';
+    
+    document.getElementById('customColor').value = defaultColor;
+    document.getElementById('customColorValue').textContent = defaultColor;
+    
+    this.settings.customColor = defaultColor;
+    this.saveSettings();
+    
+    this.showStatus('颜色已重置为默认蓝色', 'success');
+  }
+
+  setPresetColor(color) {
+    const customColorInput = document.getElementById('customColor');
+    const customColorValue = document.getElementById('customColorValue');
+    
+    if (customColorInput && customColorValue) {
+      customColorInput.value = color;
+      customColorValue.textContent = color;
+    }
+    
+    // 自动应用预设颜色
+    this.settings.customColor = color;
+    this.settings.theme = 'custom';
+    
+    this.saveSettings();
+    this.updateThemeSelection();
+    
+    // 通知content script应用自定义颜色
+    chrome.runtime.sendMessage({
+      action: 'applyCustomColor',
+      color: color
+    });
+    
+    this.showStatus(`已应用预设颜色: ${color}`, 'success');
+  }
+
+  bindCustomColorEvents() {
+    // 颜色选择器变化事件
+    const customColorInput = document.getElementById('customColor');
+    const customColorValue = document.getElementById('customColorValue');
+    
+    if (customColorInput && customColorValue) {
+      customColorInput.addEventListener('input', (e) => {
+        customColorValue.textContent = e.target.value;
+      });
+    }
+    
+    // 应用自定义颜色按钮
+    document.getElementById('applyCustomColor')?.addEventListener('click', () => {
+      this.applyCustomColor();
+    });
+    
+    // 重置颜色按钮
+    document.getElementById('resetCustomColor')?.addEventListener('click', () => {
+      this.resetCustomColor();
+    });
+    
+    // 颜色预设按钮
+    document.querySelectorAll('.color-preset-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const color = e.target.dataset.color;
+        this.setPresetColor(color);
+        
+        // 更新选中状态
+        document.querySelectorAll('.color-preset-btn').forEach(b => b.classList.remove('selected'));
+        e.target.classList.add('selected');
+      });
+    });
   }
 
   showStatus(message, type = 'success') {

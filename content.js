@@ -14,6 +14,7 @@ class FloatingNavigation {
       buttonSize: 80, // 默认80%大小
       buttonOpacity: 90, // 默认90%透明度
       theme: 'default',
+      customColor: '#3b82f6',
       enabledButtons: {
         scrollTop: true,
         scrollBottom: true,
@@ -99,9 +100,18 @@ class FloatingNavigation {
     // 应用按钮大小和透明度
     this.applyButtonStyles();
     
+    // 如果是自定义颜色主题，应用自定义颜色
+    if (this.settings.theme === 'custom' && this.settings.customColor) {
+      this.applyCustomColorStyles();
+    }
+    
     console.log('📍 设置位置:', adjustedPosition);
     console.log('📏 按钮大小:', this.settings.buttonSize + '%');
     console.log('🎭 按钮透明度:', this.settings.buttonOpacity + '%');
+    console.log('🎨 主题:', this.settings.theme);
+    if (this.settings.customColor) {
+      console.log('🌈 自定义颜色:', this.settings.customColor);
+    }
 
     // 创建主按钮
     this.mainButton = this.createButton('main', '⊕', '悬浮导航');
@@ -574,6 +584,60 @@ class FloatingNavigation {
     this.saveSettings();
   }
 
+  // 应用自定义颜色
+  applyCustomColor(color) {
+    console.log('🎨 应用自定义颜色:', color);
+    
+    if (!this.container) {
+      console.warn('⚠️ 容器不存在，无法应用自定义颜色');
+      return;
+    }
+    
+    // 生成悬停颜色（比原色稍深）
+    const hoverColor = this.darkenColor(color);
+    
+    // 设置CSS变量
+    this.container.style.setProperty('--custom-color', color);
+    this.container.style.setProperty('--custom-color-hover', hoverColor);
+    
+    // 切换到自定义主题类
+    this.container.className = `floating-nav-container theme-custom`;
+    this.currentTheme = 'custom';
+    this.settings.customColor = color;
+    this.settings.theme = 'custom';
+    
+    this.saveSettings();
+    console.log('✅ 自定义颜色已应用:', color);
+  }
+  
+  // 应用自定义颜色样式（不改变主题设置，仅设置CSS变量）
+  applyCustomColorStyles() {
+    if (!this.container || !this.settings.customColor) {
+      return;
+    }
+    
+    console.log('🎨 应用自定义颜色样式:', this.settings.customColor);
+    
+    // 生成悬停颜色（比原色稍深）
+    const hoverColor = this.darkenColor(this.settings.customColor);
+    
+    // 设置CSS变量
+    this.container.style.setProperty('--custom-color', this.settings.customColor);
+    this.container.style.setProperty('--custom-color-hover', hoverColor);
+  }
+  
+  // 颜色加深函数（用于hover效果）
+  darkenColor(color) {
+    // 简单的颜色加深算法
+    const hex = color.replace('#', '');
+    const r = Math.max(0, parseInt(hex.substr(0, 2), 16) - 30);
+    const g = Math.max(0, parseInt(hex.substr(2, 2), 16) - 30);
+    const b = Math.max(0, parseInt(hex.substr(4, 2), 16) - 30);
+    
+    const darkerHex = ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
+    return `#${darkerHex}`;
+  }
+
   // 完成欢迎设置，启动悬浮导航
   async completeWelcomeSetup() {
     console.log('🎉 用户完成欢迎设置，开始启动悬浮导航');
@@ -635,36 +699,46 @@ class FloatingNavigation {
 
 // 初始化
 let floatingNav;
+let messageQueue = []; // 消息队列，用于缓存初始化前收到的消息
 
 console.log('📦 Content Script 已加载');
 console.log('📄 页面状态:', document.readyState);
 console.log('🌐 页面URL:', window.location.href);
+
+// 初始化悬浮导航实例
+function initializeFloatingNav() {
+  console.log('🚀 开始创建悬浮导航实例');
+  floatingNav = new FloatingNavigation();
+  
+  // 处理队列中的消息
+  if (messageQueue.length > 0) {
+    console.log('📬 处理队列中的', messageQueue.length, '条消息');
+    messageQueue.forEach(({ message, sender, sendResponse }) => {
+      handleMessage(message, sender, sendResponse);
+    });
+    messageQueue = []; // 清空队列
+  }
+}
 
 // 确保页面完全加载后再初始化
 if (document.readyState === 'loading') {
   console.log('⏳ 页面正在加载，等待DOMContentLoaded...');
   document.addEventListener('DOMContentLoaded', () => {
     console.log('✅ DOMContentLoaded触发，延迟1秒初始化...');
-    setTimeout(() => {
-      console.log('🚀 开始创建悬浮导航实例');
-      floatingNav = new FloatingNavigation();
-    }, 1000); // 延迟1秒确保页面稳定
+    setTimeout(initializeFloatingNav, 1000); // 延迟1秒确保页面稳定
   });
 } else {
   console.log('✅ 页面已加载完成，延迟1秒初始化...');
-  setTimeout(() => {
-    console.log('🚀 开始创建悬浮导航实例');
-    floatingNav = new FloatingNavigation();
-  }, 1000);
+  setTimeout(initializeFloatingNav, 1000);
 }
 
-// 监听来自background和popup的消息
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log('📨 收到消息:', message);
+// 消息处理函数
+function handleMessage(message, sender, sendResponse) {
+  console.log('📨 处理消息:', message);
   
   if (!floatingNav) {
-    console.warn('⚠️ 悬浮导航未初始化');
-    return;
+    console.warn('⚠️ 悬浮导航未初始化，消息将被忽略');
+    return false;
   }
   
   switch (message.action) {
@@ -674,6 +748,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       
     case 'changeTheme':
       floatingNav.changeTheme(message.theme);
+      break;
+      
+    case 'applyCustomColor':
+      floatingNav.applyCustomColor(message.color);
       break;
       
     case 'completeWelcome':
@@ -714,6 +792,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   
   return true; // 保持消息通道开放，支持异步响应
+}
+
+// 监听来自background和popup的消息
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  console.log('📨 收到消息:', message);
+  
+  // 如果悬浮导航未初始化，将消息加入队列
+  if (!floatingNav) {
+    console.log('🔄 悬浮导航未初始化，消息加入队列:', message.action);
+    messageQueue.push({ message, sender, sendResponse });
+    return true; // 保持消息通道开放
+  }
+  
+  // 如果已初始化，直接处理消息
+  return handleMessage(message, sender, sendResponse);
 });
 
 // 页面卸载时清理资源
