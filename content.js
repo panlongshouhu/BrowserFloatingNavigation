@@ -342,7 +342,7 @@ class FloatingNavigation {
     this.hideTimer = setTimeout(() => {
       this.hideButtons();
       this.hideTimer = null;
-    }, 300); // 300ms延迟，给用户足够时间移动鼠标
+    }, 50); // 50ms延迟，快速响应鼠标移出
   }
 
   startDrag(e) {
@@ -471,11 +471,11 @@ class FloatingNavigation {
     const buttons = this.buttonGroup.querySelectorAll('.floating-nav-button');
     buttons.forEach(button => button.classList.remove('show'));
     
-    // 更快的隐藏动画
+    // 快速隐藏动画
     setTimeout(() => {
       this.buttonGroup.style.display = 'none';
       this.container.classList.remove('expanded');
-    }, 150); // 从200ms减少到150ms
+    }, 150); // 与CSS动画时间匹配
   }
   
   // 销毁悬浮导航，清理事件监听器
