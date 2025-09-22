@@ -128,7 +128,7 @@
 
 .floating-nav-buttons .floating-nav-button.show {
   transform: translate(-50%, -50%) translate(var(--x, 0), var(--y, 0)) scale(1);
-  opacity: 1;
+  opacity: var(--button-opacity);
 }
 
 /* 展开状态 */
