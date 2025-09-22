@@ -31,26 +31,6 @@
     "default_popup": "popup.html",
     "default_title": "悬浮导航设置"
   },
-  "commands": {
-    "toggle-navigation": {
-      "suggested_key": {
-        "default": "Ctrl+Shift+F"
-      },
-      "description": "切换悬浮导航显示/隐藏"
-    },
-    "scroll-to-top": {
-      "suggested_key": {
-        "default": "Ctrl+Home"
-      },
-      "description": "快速滚动到页面顶部"
-    },
-    "scroll-to-bottom": {
-      "suggested_key": {
-        "default": "Ctrl+End"
-      },
-      "description": "快速滚动到页面底部"
-    }
-  },
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",

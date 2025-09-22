@@ -102,11 +102,7 @@ class OptionsManager {
         bookmark: true,
         settings: true
       },
-      shortcuts: {
-        toggleNav: 'Ctrl+Shift+F',
-        scrollTop: 'Ctrl+Home',
-        scrollBottom: 'Ctrl+End'
-      }
+      // shortcuts功能已移除，专注核心功能体验
     };
   }
 
@@ -141,8 +137,7 @@ class OptionsManager {
     // 功能按钮设置
     this.updateFunctionButtons();
     
-    // 快捷键设置
-    this.updateShortcuts();
+    // 快捷键设置已移除
   }
 
   initializeTabState() {
@@ -230,14 +225,7 @@ class OptionsManager {
     });
   }
 
-  updateShortcuts() {
-    Object.entries(this.settings.shortcuts).forEach(([key, shortcut]) => {
-      const input = document.getElementById(`shortcut-${key.replace(/([A-Z])/g, '-$1').toLowerCase()}`);
-      if (input) {
-        input.value = shortcut;
-      }
-    });
-  }
+  // updateShortcuts方法已移除，快捷键功能已隐藏
 
   bindEvents() {
     // 欢迎页面开始按钮

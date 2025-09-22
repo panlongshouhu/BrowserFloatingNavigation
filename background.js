@@ -35,34 +35,10 @@ class BackgroundService {
       console.error('❌ 标签页事件监听器注册失败:', error);
     }
 
-    // 延迟初始化快捷键，确保所有API准备就绪
-    setTimeout(() => {
-      console.log('⏰ 开始初始化快捷键功能...');
-      this.initializeCommands();
-    }, 2000); // 延长到2秒确保API完全就绪
+    // 快捷键功能已移除，专注核心悬浮导航体验
   }
 
-  initializeCommands() {
-    try {
-      if (chrome && chrome.commands && typeof chrome.commands.onCommand !== 'undefined') {
-        chrome.commands.onCommand.addListener((command) => {
-          this.handleCommand(command);
-        });
-        console.log('✅ 快捷键监听已启用');
-        
-        // 测试Commands API可用性
-        chrome.commands.getAll((commands) => {
-          console.log('📋 可用的快捷键命令:', commands?.length || 0, '个');
-        });
-      } else {
-        console.log('⚠️  Commands API 暂不可用，快捷键功能将被禁用');
-        console.log('💡 这不会影响悬浮导航的其他功能');
-      }
-    } catch (error) {
-      console.log('⚠️  快捷键初始化失败:', error.message);
-      console.log('💡 悬浮导航其他功能仍可正常使用');
-    }
-  }
+  // initializeCommands方法已移除，快捷键功能已隐藏
 
   async handleInstall(details) {
     console.log('悬浮导航扩展已安装/更新:', details);
@@ -165,35 +141,7 @@ class BackgroundService {
     }
   }
 
-  async handleCommand(command) {
-    try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (!tab || this.isSpecialUrl(tab.url)) {
-        console.log('⚠️  快捷键无法在当前页面使用:', tab?.url || '未知页面');
-        return;
-      }
-
-      switch (command) {
-        case 'toggle-navigation':
-          await chrome.tabs.sendMessage(tab.id, { action: 'toggleNav' });
-          break;
-          
-        case 'scroll-to-top':
-          await chrome.tabs.sendMessage(tab.id, { action: 'scrollTop' });
-          break;
-          
-        case 'scroll-to-bottom':
-          await chrome.tabs.sendMessage(tab.id, { action: 'scrollBottom' });
-          break;
-          
-        case 'refresh-page':
-          await chrome.tabs.reload(tab.id);
-          break;
-      }
-    } catch (error) {
-      console.log('ℹ️  快捷键执行失败:', error.message);
-    }
-  }
+  // handleCommand方法已移除，快捷键功能已隐藏
 
   handleTabUpdate(tabId, changeInfo, tab) {
     // 当页面加载完成时，可以进行一些初始化操作

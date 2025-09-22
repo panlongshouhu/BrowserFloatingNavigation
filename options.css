@@ -839,8 +839,8 @@ body {
     transform: translateX(26px);
 }
 
-/* 快捷键列表 */
-.shortcut-list {
+/* 快捷键样式已隐藏，快捷键功能已移除 */
+/* .shortcut-list {
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -875,7 +875,7 @@ body {
     color: #333;
     min-width: 150px;
     text-align: center;
-}
+} */
 
 /* 高级选项 */
 .advanced-actions {
@@ -1050,16 +1050,16 @@ body {
         flex-direction: column;
     }
     
-    .shortcut-item,
+    /* .shortcut-item, */
     .function-item {
         flex-direction: column;
         align-items: flex-start;
         gap: 15px;
     }
     
-    .shortcut-input {
+    /* .shortcut-input {
         min-width: 100%;
-    }
+    } */
 }
 
 /* 关于软件页面样式 */
