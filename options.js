@@ -92,6 +92,7 @@ class OptionsManager {
       theme: 'default',
       customColor: '#3b82f6', // 自定义主题颜色
       isWelcomeCompleted: true, // 在设置页面中默认为已完成
+      isManuallyHidden: false, // 默认显示悬浮导航
       enabledButtons: {
         scrollTop: true,
         scrollBottom: true,
@@ -112,6 +113,11 @@ class OptionsManager {
     
     // 常规设置
     document.getElementById('enableAnimation').checked = this.settings.enableAnimation;
+    
+    // 显示悬浮导航状态 - 基于isManuallyHidden的反向状态
+    const showFloatingNavCheckbox = document.getElementById('showFloatingNav');
+    showFloatingNavCheckbox.checked = !this.settings.isManuallyHidden;
+    console.log('🎯 初始化显示悬浮导航开关状态:', !this.settings.isManuallyHidden);
     
     // 按钮大小滑动条
     const buttonSizeSlider = document.getElementById('buttonSize');
@@ -256,6 +262,11 @@ class OptionsManager {
     document.getElementById('enableAnimation').addEventListener('change', (e) => {
       this.settings.enableAnimation = e.target.checked;
       this.saveSettings();
+    });
+
+    // 显示悬浮导航切换
+    document.getElementById('showFloatingNav').addEventListener('change', (e) => {
+      this.toggleFloatingNavVisibility(e.target.checked);
     });
 
     // 按钮大小滑动条事件
@@ -515,6 +526,39 @@ class OptionsManager {
       this.saveSettings();
       this.initializeUI();
       this.showStatus('已恢复默认设置', 'success');
+    }
+  }
+
+  // 切换悬浮导航显示/隐藏状态
+  async toggleFloatingNavVisibility(shouldShow) {
+    try {
+      console.log('🎯 设置页面切换悬浮导航可见性:', shouldShow);
+      
+      // 更新设置中的手动隐藏状态（与shouldShow相反）
+      this.settings.isManuallyHidden = !shouldShow;
+      await this.saveSettings();
+      
+      // 通过background script广播状态变化到所有标签页
+      try {
+        const response = await chrome.runtime.sendMessage({
+          action: 'broadcastHideState',
+          isManuallyHidden: !shouldShow
+        });
+        
+        console.log('✅ 悬浮导航状态广播成功:', response);
+        
+        // 显示状态提示
+        const statusText = shouldShow ? '悬浮导航已显示' : '悬浮导航已隐藏';
+        this.showStatus(statusText, 'success');
+        
+      } catch (error) {
+        console.error('广播切换状态失败:', error);
+        this.showStatus('切换失败', 'error');
+      }
+      
+    } catch (error) {
+      console.error('切换悬浮导航可见性失败:', error);
+      this.showStatus('操作失败', 'error');
     }
   }
 

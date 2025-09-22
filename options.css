@@ -594,7 +594,7 @@ body {
 .toggle-switch {
     position: relative;
     width: 60px;
-    height: 34px;
+    height: 30px;
     margin-left: auto;
     appearance: none;
     background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e0 100%);

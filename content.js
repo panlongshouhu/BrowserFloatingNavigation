@@ -1170,6 +1170,44 @@ class FloatingNavigation {
     }
   }
 
+  // 从设置页面切换悬浮导航状态（同步版本，不需要广播）
+  toggleFloatingNavFromSettings(shouldShow) {
+    if (!this.container) {
+      console.warn('⚠️ 悬浮导航容器不存在');
+      return { success: false, error: 'Container not found' };
+    }
+
+    console.log('🎯 设置页面切换悬浮导航，目标状态:', shouldShow ? '显示' : '隐藏');
+    
+    // 直接设置状态，不需要检查当前状态
+    this.isManuallyHidden = !shouldShow;
+    
+    if (shouldShow) {
+      // 用户要显示
+      this.container.style.display = 'block';
+      this.container.style.opacity = '1';
+      this.container.style.visibility = 'visible';
+      this.container.style.pointerEvents = 'auto';
+      console.log('👁️ 设置页面显示悬浮导航');
+    } else {
+      // 用户要隐藏
+      this.container.style.display = 'none';
+      this.container.style.opacity = '0';
+      this.container.style.visibility = 'hidden';
+      this.container.style.pointerEvents = 'none';
+      console.log('👁️ 设置页面隐藏悬浮导航');
+    }
+    
+    // 注意：不需要调用saveSettings()和broadcastHideStateToAllTabs()
+    // 因为settings已经在options.js中保存，广播也会由background script处理
+    
+    return { 
+      success: true, 
+      visible: shouldShow,
+      isManuallyHidden: this.isManuallyHidden
+    };
+  }
+
   // 显示通知方法
   showNotification(message, type = 'success') {
     const notification = document.createElement('div');
@@ -1660,6 +1698,18 @@ function handleMessage(message, sender, sendResponse) {
         floatingNav.applyHideState();
       }
       sendResponse({ success: true });
+      break;
+      
+    // 处理来自设置页面的切换请求
+    case 'toggleNavFromSettings':
+      console.log('🎯 收到来自设置页面的切换请求:', message.shouldShow);
+      if (floatingNav && floatingNav.toggleFloatingNavFromSettings) {
+        const result = floatingNav.toggleFloatingNavFromSettings(message.shouldShow);
+        sendResponse(result);
+      } else {
+        console.warn('⚠️ 悬浮导航未初始化或方法不存在');
+        sendResponse({ success: false, error: 'FloatingNav not ready' });
+      }
       break;
       
     default:
