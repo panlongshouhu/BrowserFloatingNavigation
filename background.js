@@ -165,6 +165,11 @@ class BackgroundService {
           sendResponse(result);
           break;
           
+        case 'broadcastHideState':
+          await this.broadcastHideStateToAllTabs(message.isManuallyHidden);
+          sendResponse({ success: true });
+          break;
+          
         default:
           console.log('未知消息类型:', message.action);
       }
@@ -323,6 +328,43 @@ class BackgroundService {
     } catch (error) {
       console.error('关闭标签页失败:', error);
       return { success: false, error: error.message };
+    }
+  }
+
+  // 向所有标签页广播隐藏状态变化
+  async broadcastHideStateToAllTabs(isManuallyHidden) {
+    try {
+      console.log('📢 Background广播隐藏状态到所有标签页:', isManuallyHidden);
+      
+      // 先更新存储中的状态
+      const currentSettings = await this.getSettings();
+      currentSettings.isManuallyHidden = isManuallyHidden;
+      await this.saveSettings(currentSettings);
+      console.log('💾 隐藏状态已保存到存储');
+      
+      // 获取所有标签页并发送消息
+      const tabs = await chrome.tabs.query({});
+      let broadcastCount = 0;
+      
+      for (const tab of tabs) {
+        if (tab.id && tab.url && !this.isSpecialUrl(tab.url)) {
+          try {
+            await chrome.tabs.sendMessage(tab.id, {
+              action: 'applyHideState',
+              isManuallyHidden: isManuallyHidden
+            });
+            broadcastCount++;
+          } catch (error) {
+            // 静默忽略无法发送消息的标签页（可能没有content script）
+            console.log('跳过标签页:', tab.id, error.message);
+          }
+        }
+      }
+      
+      console.log(`✅ 隐藏状态已广播到 ${broadcastCount} 个标签页`);
+      
+    } catch (error) {
+      console.error('广播隐藏状态失败:', error);
     }
   }
 

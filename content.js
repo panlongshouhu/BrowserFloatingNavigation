@@ -7,6 +7,7 @@ class FloatingNavigation {
     this.lastHoverState = false; // 跟踪鼠标悬停状态变化
     this.isPopupOpen = false; // 跟踪popup状态
     this.hideTimer = null; // 延迟隐藏计时器
+    this.isManuallyHidden = false; // 跟踪用户是否手动隐藏
     // 设置合理的默认位置
     const defaultX = Math.max(100, window.innerWidth - 80);
     const defaultY = Math.max(100, window.innerHeight - 80);
@@ -77,7 +78,14 @@ class FloatingNavigation {
     try {
       const result = await chrome.storage.sync.get(['floatingNavSettings']);
       if (result.floatingNavSettings) {
-        this.settings = { ...this.settings, ...result.floatingNavSettings };
+        const loadedSettings = result.floatingNavSettings;
+        this.settings = { ...this.settings, ...loadedSettings };
+        
+        // 恢复手动隐藏状态
+        if (typeof loadedSettings.isManuallyHidden === 'boolean') {
+          this.isManuallyHidden = loadedSettings.isManuallyHidden;
+          console.log('🔄 恢复手动隐藏状态:', this.isManuallyHidden);
+        }
         
         // 清理和转换可能的旧格式设置
         let needsSave = false;
@@ -125,7 +133,12 @@ class FloatingNavigation {
 
   async saveSettings() {
     try {
-      await chrome.storage.sync.set({ floatingNavSettings: this.settings });
+      // 包含手动隐藏状态
+      const settingsToSave = {
+        ...this.settings,
+        isManuallyHidden: this.isManuallyHidden
+      };
+      await chrome.storage.sync.set({ floatingNavSettings: settingsToSave });
     } catch (error) {
       console.error('设置保存失败:', error);
     }
@@ -209,6 +222,12 @@ class FloatingNavigation {
       };
       addToBody();
     }
+    
+    // 应用初始隐藏状态（如果用户之前手动隐藏了）
+    setTimeout(() => {
+      this.applyHideState();
+      console.log('👁️ 初始隐藏状态已应用:', this.isManuallyHidden);
+    }, 50); // 稍微延迟确保DOM完全添加
   }
 
   createFunctionButtons() {
@@ -947,8 +966,39 @@ class FloatingNavigation {
         this.updatePosition();
       }
       
+      // 检查手动隐藏状态是否变化
+      if (newSettings.isManuallyHidden !== oldSettings.isManuallyHidden) {
+        console.log('👁️ 手动隐藏状态变化:', oldSettings.isManuallyHidden, '->', newSettings.isManuallyHidden);
+        this.isManuallyHidden = newSettings.isManuallyHidden;
+        this.applyHideState();
+      }
+      
     } catch (error) {
       console.error('❌ 处理设置变化失败:', error);
+    }
+  }
+
+  // 应用隐藏状态
+  applyHideState() {
+    if (!this.container) return;
+    
+    if (this.isManuallyHidden) {
+      this.container.style.display = 'none';
+      this.container.style.opacity = '0';
+      this.container.style.visibility = 'hidden';
+      this.container.style.pointerEvents = 'none';
+      console.log('👁️ 应用隐藏状态：已隐藏');
+    } else {
+      // 只有在页面可见且有焦点时才显示（或popup打开时）
+      const isVisible = document.visibilityState === 'visible';
+      const hasFocus = document.hasFocus();
+      if (isVisible && hasFocus || this.isPopupOpen) {
+        this.container.style.display = 'block';
+        this.container.style.opacity = '1';
+        this.container.style.visibility = 'visible';
+        this.container.style.pointerEvents = 'auto';
+        console.log('👁️ 应用隐藏状态：已显示');
+      }
     }
   }
 
@@ -963,6 +1013,12 @@ class FloatingNavigation {
 
   // 处理页面可见性变化
   handleVisibilityChange() {
+    // 如果用户手动隐藏了，不要自动显示
+    if (this.isManuallyHidden) {
+      console.log('👁️ 用户手动隐藏，跳过自动显示逻辑');
+      return;
+    }
+    
     const isVisible = document.visibilityState === 'visible';
     const hasFocus = document.hasFocus();
     const shouldShow = isVisible && hasFocus;
@@ -971,7 +1027,8 @@ class FloatingNavigation {
       visibilityState: document.visibilityState,
       hasFocus: hasFocus,
       shouldShow: shouldShow,
-      isPopupOpen: this.isPopupOpen
+      isPopupOpen: this.isPopupOpen,
+      isManuallyHidden: this.isManuallyHidden
     });
     
     if (this.container) {
@@ -987,7 +1044,14 @@ class FloatingNavigation {
 
   // 处理标签页激活状态
   handleTabActivation(isActive) {
-    console.log('📋 标签页激活状态变化:', isActive);
+    console.log('📋 标签页激活状态变化:', isActive, '手动隐藏状态:', this.isManuallyHidden);
+    
+    // 如果用户手动隐藏了，不要因为标签页切换而自动显示
+    if (this.isManuallyHidden && isActive) {
+      console.log('👁️ 用户手动隐藏，跳过标签页激活显示');
+      return;
+    }
+    
     if (this.container) {
       if (isActive) {
         this.showFloatingNav();
@@ -1023,14 +1087,16 @@ class FloatingNavigation {
     }, 500);
   }
 
-  // 显示悬浮导航
+  // 显示悬浮导航（自动显示，会检查手动隐藏状态）
   showFloatingNav() {
-    if (this.container) {
+    if (this.container && !this.isManuallyHidden) {
       this.container.style.display = 'block';
       this.container.style.opacity = '1';
       this.container.style.visibility = 'visible';
       this.container.style.pointerEvents = 'auto';
-      console.log('👁️ 悬浮导航已显示');
+      console.log('👁️ 悬浮导航已自动显示');
+    } else if (this.isManuallyHidden) {
+      console.log('👁️ 跳过自动显示，用户已手动隐藏');
     }
   }
 
@@ -1041,7 +1107,66 @@ class FloatingNavigation {
       this.container.style.opacity = '0';
       this.container.style.visibility = 'hidden';
       this.container.style.pointerEvents = 'none';
-      console.log('👁️ 悬浮导航已隐藏');
+      console.log('👁️ 悬浮导航已隐藏', this.isManuallyHidden ? '(用户手动)' : '(自动)');
+    }
+  }
+
+  // 手动切换悬浮导航显示/隐藏状态
+  async toggleFloatingNav() {
+    if (!this.container) {
+      console.warn('⚠️ 悬浮导航容器不存在');
+      return { success: false, error: 'Container not found' };
+    }
+
+    const isCurrentlyVisible = this.container.style.display !== 'none' && 
+                              this.container.style.visibility !== 'hidden';
+    
+    console.log('🔄 切换悬浮导航，当前状态:', isCurrentlyVisible ? '可见' : '隐藏');
+    
+    if (isCurrentlyVisible) {
+      // 当前可见，用户要隐藏
+      this.isManuallyHidden = true;
+      this.container.style.display = 'none';
+      this.container.style.opacity = '0';
+      this.container.style.visibility = 'hidden';
+      this.container.style.pointerEvents = 'none';
+      console.log('👁️ 用户手动隐藏悬浮导航');
+    } else {
+      // 当前隐藏，用户要显示
+      this.isManuallyHidden = false;
+      this.container.style.display = 'block';
+      this.container.style.opacity = '1';
+      this.container.style.visibility = 'visible';
+      this.container.style.pointerEvents = 'auto';
+      console.log('👁️ 用户手动显示悬浮导航');
+    }
+    
+    // 保存状态并广播到所有标签页
+    await this.saveSettings();
+    await this.broadcastHideStateToAllTabs(this.isManuallyHidden);
+    
+    return { 
+      success: true, 
+      visible: !isCurrentlyVisible,
+      isManuallyHidden: this.isManuallyHidden
+    };
+  }
+
+  // 向所有标签页广播隐藏状态变化
+  async broadcastHideStateToAllTabs(isManuallyHidden) {
+    try {
+      console.log('📢 广播隐藏状态到所有标签页:', isManuallyHidden);
+      
+      // 发送消息到background script，由它来广播到所有标签页
+      chrome.runtime.sendMessage({
+        action: 'broadcastHideState',
+        isManuallyHidden: isManuallyHidden
+      }).catch(error => {
+        console.error('发送广播隐藏状态消息失败:', error);
+      });
+      
+    } catch (error) {
+      console.error('广播隐藏状态失败:', error);
     }
   }
 
@@ -1437,11 +1562,13 @@ function handleMessage(message, sender, sendResponse) {
       
     // 处理来自popup的快捷操作
     case 'toggleNav':
-      console.log('🎯 切换悬浮导航显示/隐藏');
-      if (floatingNav.container) {
-        const isVisible = floatingNav.container.style.display !== 'none';
-        floatingNav.container.style.display = isVisible ? 'none' : 'block';
-        sendResponse({ success: true, visible: !isVisible });
+      console.log('🎯 用户切换悬浮导航显示/隐藏');
+      if (floatingNav && floatingNav.toggleFloatingNav) {
+        const result = floatingNav.toggleFloatingNav();
+        sendResponse(result);
+      } else {
+        console.warn('⚠️ 悬浮导航未初始化或方法不存在');
+        sendResponse({ success: false, error: 'FloatingNav not ready' });
       }
       break;
       
@@ -1521,6 +1648,16 @@ function handleMessage(message, sender, sendResponse) {
         floatingNav.isPopupOpen = false;
         // 检查是否需要隐藏悬浮按钮
         floatingNav.handleVisibilityChange();
+      }
+      sendResponse({ success: true });
+      break;
+      
+    // 处理隐藏状态广播
+    case 'applyHideState':
+      console.log('📋 收到隐藏状态广播:', message.isManuallyHidden);
+      if (floatingNav) {
+        floatingNav.isManuallyHidden = message.isManuallyHidden;
+        floatingNav.applyHideState();
       }
       sendResponse({ success: true });
       break;
