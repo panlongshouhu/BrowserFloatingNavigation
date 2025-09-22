@@ -48,10 +48,11 @@
 }
 
 .floating-nav-button.main .button-icon {
-  font-size: calc(26px * var(--button-size-scale));
+  font-size: calc(32px * var(--button-size-scale)); /* 从26px增大到32px，让主按钮更突出 */
   font-weight: 900;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
   pointer-events: none; /* 确保主按钮图标不阻止拖拽 */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* 平滑的悬停过渡动画 */
 }
 
 
@@ -59,16 +60,19 @@
 
 /* 按钮图标 - 使用动态大小 */
 .button-icon {
-  font-size: calc(18px * var(--button-size-scale));
+  font-size: calc(22px * var(--button-size-scale)); /* 从18px增大到22px，提升视觉效果 */
   line-height: 1;
   z-index: 2;
-  font-weight: bold;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  font-weight: 700; /* 从bold改为数值700，更清晰 */
+  text-shadow: 0 2px 3px rgba(0, 0, 0, 0.4); /* 增强阴影效果，匹配大图标 */
   pointer-events: none; /* 让事件穿透到父按钮元素 */
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); /* 功能按钮图标平滑过渡 */
 }
 
 .floating-nav-button:hover .button-icon {
-  /* 移除图标缩放，避免位置变化 */
+  /* 悬停时增强图标视觉效果 */
+  text-shadow: 0 3px 6px rgba(0, 0, 0, 0.5);
+  filter: brightness(1.1);
 }
 
 .floating-nav-button.main {
@@ -76,11 +80,11 @@
   user-select: none;
 }
 
-.floating-nav-button.main .button-icon {
-  font-size: 26px;
-  font-weight: 900;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-  pointer-events: none; /* 确保主按钮图标不阻止拖拽 */
+.floating-nav-button.main:hover .button-icon {
+  /* 主按钮悬停时的增强效果 */
+  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
+  filter: brightness(1.15);
+  transform: scale(1.05); /* 主按钮图标悬停时微微放大 */
 }
 
 /* 按钮标签 */
