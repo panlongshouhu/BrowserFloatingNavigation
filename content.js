@@ -514,7 +514,7 @@ class FloatingNavigation {
     buttons.forEach((button, index) => {
       setTimeout(() => {
         button.classList.add('show');
-      }, index * 30); // 从50ms减少到30ms，更快的展开
+      }, index * 10); // 从50ms减少到10ms，更快的展开
     });
   }
 
