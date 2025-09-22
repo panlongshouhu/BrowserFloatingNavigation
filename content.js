@@ -25,7 +25,10 @@ class FloatingNavigation {
         forward: true,
         newTab: true,
         bookmark: true,
-        settings: true
+        settings: true,
+        copyLink: false,
+        fullscreen: false,
+        closeTab: false
       }
     };
     this.init();
@@ -204,7 +207,11 @@ class FloatingNavigation {
       { id: 'scroll-bottom', key: 'scrollBottom', icon: '↓', label: '到达底部', action: () => this.scrollToBottom() },
       { id: 'bookmark', key: 'bookmark', icon: '★', label: '添加书签', action: () => this.addBookmark() },
       { id: 'back', key: 'back', icon: '←', label: '后退', action: () => this.goBack() },
-      { id: 'refresh', key: 'refresh', icon: '⟲', label: '刷新页面', action: () => this.refreshPage() } 
+      { id: 'refresh', key: 'refresh', icon: '⟲', label: '刷新页面', action: () => this.refreshPage() },
+      // 新增功能按钮
+      { id: 'copy-link', key: 'copyLink', icon: '📋', label: '复制链接', action: () => this.copyCurrentLink() },
+      { id: 'fullscreen', key: 'fullscreen', icon: '🔍', label: '全屏切换', action: () => this.toggleFullscreen() },
+      { id: 'close-tab', key: 'closeTab', icon: '✖', label: '关闭标签页', action: () => this.closeCurrentTab() }
     ];
 
     // 只创建启用的按钮
@@ -747,6 +754,143 @@ class FloatingNavigation {
 
   openSettings() {
     chrome.runtime.sendMessage({ action: 'openOptions' });
+  }
+
+  // 新增功能方法
+  copyCurrentLink() {
+    const currentUrl = window.location.href;
+    if (navigator.clipboard && window.isSecureContext) {
+      // 使用现代 Clipboard API
+      navigator.clipboard.writeText(currentUrl).then(() => {
+        console.log('📋 链接已复制到剪贴板:', currentUrl);
+        this.showNotification('链接已复制到剪贴板', 'success');
+      }).catch(err => {
+        console.error('复制失败:', err);
+        this.fallbackCopyTextToClipboard(currentUrl);
+      });
+    } else {
+      // 降级到旧版本的复制方式
+      this.fallbackCopyTextToClipboard(currentUrl);
+    }
+  }
+
+  // 降级复制方法
+  fallbackCopyTextToClipboard(text) {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.top = "0";
+    textArea.style.left = "0";
+    textArea.style.position = "fixed";
+    textArea.style.opacity = "0";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+      const successful = document.execCommand('copy');
+      if (successful) {
+        console.log('📋 链接已通过降级方式复制:', text);
+        this.showNotification('链接已复制到剪贴板', 'success');
+      } else {
+        this.showNotification('复制失败，请手动复制', 'error');
+      }
+    } catch (err) {
+      console.error('降级复制也失败:', err);
+      this.showNotification('复制失败，请手动复制', 'error');
+    }
+    
+    document.body.removeChild(textArea);
+  }
+
+  toggleFullscreen() {
+    try {
+      if (!document.fullscreenElement) {
+        // 进入全屏
+        document.documentElement.requestFullscreen().then(() => {
+          console.log('🔍 已进入全屏模式');
+          this.showNotification('已进入全屏模式', 'success');
+        }).catch(err => {
+          console.error('进入全屏失败:', err);
+          this.showNotification('全屏模式不支持', 'error');
+        });
+      } else {
+        // 退出全屏
+        document.exitFullscreen().then(() => {
+          console.log('🔍 已退出全屏模式');
+          this.showNotification('已退出全屏模式', 'success');
+        }).catch(err => {
+          console.error('退出全屏失败:', err);
+        });
+      }
+    } catch (err) {
+      console.error('全屏切换失败:', err);
+      this.showNotification('浏览器不支持全屏功能', 'error');
+    }
+  }
+
+  closeCurrentTab() {
+    try {
+      // 通过background script关闭标签页
+      chrome.runtime.sendMessage({ action: 'closeTab' }, (response) => {
+        if (response && response.success) {
+          console.log('✖ 标签页关闭请求已发送');
+        } else {
+          // 如果通过扩展API失败，尝试使用window.close()
+          window.close();
+        }
+      });
+    } catch (err) {
+      console.error('关闭标签页失败:', err);
+      // 最后尝试使用window.close()
+      if (window.history.length <= 1) {
+        window.close();
+      } else {
+        this.showNotification('无法关闭此标签页', 'error');
+      }
+    }
+  }
+
+
+  // 显示通知方法
+  showNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    notification.className = `floating-nav-notification ${type}`;
+    notification.textContent = message;
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      color: white;
+      background-color: ${type === 'success' ? '#10b981' : '#ef4444'};
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      z-index: 10002;
+      transform: translateX(300px);
+      opacity: 0;
+      transition: all 0.3s ease;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // 显示动画
+    setTimeout(() => {
+      notification.style.transform = 'translateX(0)';
+      notification.style.opacity = '1';
+    }, 10);
+    
+    // 3秒后自动消失
+    setTimeout(() => {
+      notification.style.transform = 'translateX(300px)';
+      notification.style.opacity = '0';
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.parentNode.removeChild(notification);
+        }
+      }, 300);
+    }, 3000);
   }
 
   // 主题切换

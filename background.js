@@ -74,7 +74,10 @@ class BackgroundService {
           forward: true,
           newTab: true,
           bookmark: true,
-          settings: true
+          settings: true,
+          copyLink: false,
+          fullscreen: false,
+          closeTab: false
         }
       }
     };
@@ -127,6 +130,11 @@ class BackgroundService {
           
         case 'completeWelcome':
           await this.completeWelcomeSetup();
+          break;
+          
+        case 'closeTab':
+          const result = await this.closeCurrentTab(sender.tab?.id);
+          sendResponse(result);
           break;
           
         default:
@@ -212,6 +220,22 @@ class BackgroundService {
     } catch (error) {
       console.error('添加书签失败:', error);
       this.showNotification('添加书签失败', error.message);
+    }
+  }
+
+  async closeCurrentTab(tabId) {
+    try {
+      if (tabId) {
+        await chrome.tabs.remove(tabId);
+        console.log('✖ 标签页已关闭:', tabId);
+        return { success: true };
+      } else {
+        console.warn('⚠️ 无法获取标签页ID');
+        return { success: false, error: '无法获取标签页ID' };
+      }
+    } catch (error) {
+      console.error('关闭标签页失败:', error);
+      return { success: false, error: error.message };
     }
   }
 
