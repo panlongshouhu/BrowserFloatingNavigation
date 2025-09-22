@@ -61,9 +61,11 @@ class BackgroundService {
       floatingNavSettings: {
         position: { x: 1200, y: 600 }, // 默认位置，会在content script中自动调整
         enableAnimation: true,
-        buttonSize: 'medium',
+        buttonSize: 80, // 默认80%大小
+        buttonOpacity: 90, // 默认90%透明度
         theme: 'default',
-        isWelcomeCompleted: false, // 标记用户是否已完成欢迎设置
+        customColor: '#3b82f6',
+        isWelcomeCompleted: false, // 欢迎预览状态标记（不影响悬浮导航显示）
         enabledButtons: {
           scrollTop: true,
           scrollBottom: true,
@@ -73,11 +75,6 @@ class BackgroundService {
           newTab: true,
           bookmark: true,
           settings: true
-        },
-        shortcuts: {
-          toggleNav: 'Ctrl+Shift+F',
-          scrollTop: 'Ctrl+Home',
-          scrollBottom: 'Ctrl+End'
         }
       }
     };
