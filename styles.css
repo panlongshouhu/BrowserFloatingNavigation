@@ -51,6 +51,7 @@
   font-size: calc(26px * var(--button-size-scale));
   font-weight: 900;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  pointer-events: none; /* 确保主按钮图标不阻止拖拽 */
 }
 
 
@@ -63,6 +64,7 @@
   z-index: 2;
   font-weight: bold;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  pointer-events: none; /* 让事件穿透到父按钮元素 */
 }
 
 .floating-nav-button:hover .button-icon {
@@ -78,6 +80,7 @@
   font-size: 26px;
   font-weight: 900;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  pointer-events: none; /* 确保主按钮图标不阻止拖拽 */
 }
 
 /* 按钮标签 */
@@ -142,6 +145,7 @@
   transform: translate(-50%, -50%);
   z-index: 1000;
   animation: pulse-center 2s ease-in-out infinite;
+  pointer-events: none; /* 防止阻挡拖拽事件 */
 }
 
 @keyframes pulse-center {

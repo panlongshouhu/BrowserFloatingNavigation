@@ -4,6 +4,7 @@ class FloatingNavigation {
     this.isInitialized = false;
     this.isDragging = false;
     this.currentTheme = 'default';
+    this.lastHoverState = false; // 跟踪鼠标悬停状态变化
     // 设置合理的默认位置
     const defaultX = Math.max(100, window.innerWidth - 80);
     const defaultY = Math.max(100, window.innerHeight - 80);
@@ -256,15 +257,29 @@ class FloatingNavigation {
     
     // 全局鼠标移动检测 - 使用节流避免过度检查
     this.lastMouseCheck = 0;
+    this.lastRectUpdate = 0;
+    this.cachedMainButtonRect = null;
     this.globalMouseMoveHandler = (e) => {
       if (this.isDragging) return;
       
-      // 节流：每50ms检查一次，提高性能
+      // 节流：每20ms检查一次，提高响应精度
       const now = Date.now();
-      if (now - this.lastMouseCheck < 50) return;
+      if (now - this.lastMouseCheck < 20) return;
       this.lastMouseCheck = now;
       
+      // 每100ms更新一次缓存的主按钮位置信息，减少频繁的DOM查询
+      if (now - this.lastRectUpdate > 100) {
+        this.cachedMainButtonRect = this.mainButton?.getBoundingClientRect();
+        this.lastRectUpdate = now;
+      }
+      
       const isOverFloatingNav = this.isMouseOverFloatingNav(e.clientX, e.clientY);
+      
+      // 添加状态变化检测，减少不必要的日志
+      if (isOverFloatingNav !== this.lastHoverState) {
+        this.lastHoverState = isOverFloatingNav;
+        console.log('🖱️ 鼠标状态变化:', isOverFloatingNav ? '进入悬浮导航区域' : '离开悬浮导航区域');
+      }
       
       if (isOverFloatingNav) {
         this.clearHideTimer();
@@ -277,12 +292,26 @@ class FloatingNavigation {
     // 添加全局鼠标移动监听
     document.addEventListener('mousemove', this.globalMouseMoveHandler);
 
-    // 拖拽事件
+    // 拖拽事件 - 主按钮直接绑定
     this.mainButton.addEventListener('mousedown', (e) => {
       if (e.button === 0) { // 左键
+        console.log('🖱️ 主按钮mousedown事件触发，目标元素:', e.target.className);
         e.preventDefault();
         e.stopPropagation();
         this.startDrag(e);
+      }
+    });
+    
+    // 拖拽事件 - 容器级别事件委托（备用方案）
+    this.container.addEventListener('mousedown', (e) => {
+      if (e.button === 0 && e.target.closest('.floating-nav-button.main')) {
+        console.log('🖱️ 容器级别mousedown事件触发，目标元素:', e.target.className);
+        // 如果主按钮事件没有触发，这里作为备用
+        if (!this.isDragging) {
+          e.preventDefault();
+          e.stopPropagation();
+          this.startDrag(e);
+        }
       }
     });
 
@@ -301,19 +330,29 @@ class FloatingNavigation {
   
   // 检查鼠标是否在悬浮导航区域内（包括功能按钮）
   isMouseOverFloatingNav(mouseX, mouseY) {
-    const containerRect = this.container.getBoundingClientRect();
-    const margin = 10; // 给一些边距容错
+    // 使用缓存的主按钮位置信息，如果没有则实时获取
+    const mainButtonRect = this.cachedMainButtonRect || this.mainButton?.getBoundingClientRect();
+    if (!mainButtonRect) return false;
     
-    // 检查主按钮区域
-    const mainButtonRect = {
-      left: containerRect.left - margin,
-      right: containerRect.right + margin,
-      top: containerRect.top - margin,
-      bottom: containerRect.bottom + margin
+    // 动态计算边距容错，基于按钮大小
+    const buttonSize = Math.max(mainButtonRect.width, mainButtonRect.height);
+    const dynamicMargin = Math.max(15, buttonSize * 0.2); // 最少15px或按钮大小的20%
+    
+    // 检查主按钮区域 - 使用主按钮的实际位置而不是容器位置
+    const expandedMainButtonRect = {
+      left: mainButtonRect.left - dynamicMargin,
+      right: mainButtonRect.right + dynamicMargin,
+      top: mainButtonRect.top - dynamicMargin,
+      bottom: mainButtonRect.bottom + dynamicMargin
     };
     
-    if (mouseX >= mainButtonRect.left && mouseX <= mainButtonRect.right &&
-        mouseY >= mainButtonRect.top && mouseY <= mainButtonRect.bottom) {
+    // 使用圆形检测，更符合按钮的视觉形状
+    const centerX = (mainButtonRect.left + mainButtonRect.right) / 2;
+    const centerY = (mainButtonRect.top + mainButtonRect.bottom) / 2;
+    const radius = buttonSize / 2 + dynamicMargin;
+    const distance = Math.sqrt(Math.pow(mouseX - centerX, 2) + Math.pow(mouseY - centerY, 2));
+    
+    if (distance <= radius) {
       return true;
     }
     
@@ -322,8 +361,16 @@ class FloatingNavigation {
       const buttons = this.buttonGroup.querySelectorAll('.floating-nav-button');
       for (const button of buttons) {
         const buttonRect = button.getBoundingClientRect();
-        if (mouseX >= buttonRect.left - margin && mouseX <= buttonRect.right + margin &&
-            mouseY >= buttonRect.top - margin && mouseY <= buttonRect.bottom + margin) {
+        const functionButtonSize = Math.max(buttonRect.width, buttonRect.height);
+        const functionMargin = Math.max(12, functionButtonSize * 0.15); // 功能按钮稍小的容错
+        
+        // 同样使用圆形检测功能按钮
+        const btnCenterX = (buttonRect.left + buttonRect.right) / 2;
+        const btnCenterY = (buttonRect.top + buttonRect.bottom) / 2;
+        const btnRadius = functionButtonSize / 2 + functionMargin;
+        const btnDistance = Math.sqrt(Math.pow(mouseX - btnCenterX, 2) + Math.pow(mouseY - btnCenterY, 2));
+        
+        if (btnDistance <= btnRadius) {
           return true;
         }
       }
@@ -340,6 +387,12 @@ class FloatingNavigation {
     }
   }
   
+  // 重置位置缓存（在按钮移动后调用）
+  resetPositionCache() {
+    this.cachedMainButtonRect = null;
+    this.lastRectUpdate = 0;
+  }
+  
   // 安排延迟隐藏菜单
   scheduleHideButtons() {
     this.clearHideTimer();
@@ -350,6 +403,7 @@ class FloatingNavigation {
   }
 
   startDrag(e) {
+    console.log('🚀 startDrag方法被调用，事件类型:', e.type, '鼠标坐标:', e.clientX, e.clientY);
     this.isDragging = true;
     
     // 检查菜单是否显示，如果显示则隐藏
@@ -412,6 +466,9 @@ class FloatingNavigation {
       this.saveSettings();
       
       console.log('🖱️ 拖拽结束，最终位置:', this.settings.position);
+      
+      // 重置位置缓存，因为按钮位置已改变
+      this.resetPositionCache();
       
       // 移除事件监听器
       document.removeEventListener('mousemove', mouseMoveHandler);
