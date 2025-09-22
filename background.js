@@ -35,6 +35,34 @@ class BackgroundService {
       console.error('❌ 标签页事件监听器注册失败:', error);
     }
 
+    // 监听标签页激活事件，实现单实例悬浮按钮
+    try {
+      if (chrome && chrome.tabs && chrome.tabs.onActivated) {
+        chrome.tabs.onActivated.addListener((activeInfo) => {
+          this.handleTabActivated(activeInfo);
+        });
+        console.log('✅ 标签页激活事件监听器注册成功');
+      } else {
+        console.warn('⚠️ chrome.tabs.onActivated API不可用');
+      }
+    } catch (error) {
+      console.error('❌ 标签页激活事件监听器注册失败:', error);
+    }
+
+    // 监听窗口焦点变化事件
+    try {
+      if (chrome && chrome.windows && chrome.windows.onFocusChanged) {
+        chrome.windows.onFocusChanged.addListener((windowId) => {
+          this.handleWindowFocusChanged(windowId);
+        });
+        console.log('✅ 窗口焦点变化事件监听器注册成功');
+      } else {
+        console.warn('⚠️ chrome.windows.onFocusChanged API不可用');
+      }
+    } catch (error) {
+      console.error('❌ 窗口焦点变化事件监听器注册失败:', error);
+    }
+
     // 快捷键功能已移除，专注核心悬浮导航体验
   }
 
@@ -153,6 +181,65 @@ class BackgroundService {
     if (changeInfo.status === 'complete' && tab.url && !this.isSpecialUrl(tab.url)) {
       // 确保content script已注入
       this.ensureContentScriptInjected(tabId, tab.url);
+    }
+  }
+
+  // 处理标签页激活事件
+  async handleTabActivated(activeInfo) {
+    try {
+      console.log('📋 标签页激活:', activeInfo);
+      
+      // 获取所有标签页
+      const tabs = await chrome.tabs.query({});
+      
+      // 向所有标签页发送激活状态消息
+      tabs.forEach(tab => {
+        if (tab.id && !this.isSpecialUrl(tab.url || '')) {
+          const isActive = tab.id === activeInfo.tabId;
+          chrome.tabs.sendMessage(tab.id, {
+            action: 'tabActivated',
+            tabId: tab.id,
+            isActive: isActive
+          }).catch(() => {
+            // 忽略无法发送消息的标签页（可能还没有content script）
+          });
+        }
+      });
+    } catch (error) {
+      console.error('处理标签页激活事件失败:', error);
+    }
+  }
+
+  // 处理窗口焦点变化事件
+  async handleWindowFocusChanged(windowId) {
+    try {
+      console.log('🪟 窗口焦点变化:', windowId);
+      
+      if (windowId === chrome.windows.WINDOW_ID_NONE) {
+        // 所有窗口都失去焦点，隐藏所有悬浮按钮
+        const tabs = await chrome.tabs.query({});
+        tabs.forEach(tab => {
+          if (tab.id && !this.isSpecialUrl(tab.url || '')) {
+            chrome.tabs.sendMessage(tab.id, {
+              action: 'tabActivated',
+              tabId: tab.id,
+              isActive: false
+            }).catch(() => {});
+          }
+        });
+      } else {
+        // 获取当前窗口的活跃标签页
+        try {
+          const activeTabs = await chrome.tabs.query({ active: true, windowId: windowId });
+          if (activeTabs.length > 0) {
+            this.handleTabActivated({ tabId: activeTabs[0].id, windowId: windowId });
+          }
+        } catch (error) {
+          console.error('获取活跃标签页失败:', error);
+        }
+      }
+    } catch (error) {
+      console.error('处理窗口焦点变化事件失败:', error);
     }
   }
 

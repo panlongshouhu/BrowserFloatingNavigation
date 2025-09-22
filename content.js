@@ -5,6 +5,8 @@ class FloatingNavigation {
     this.isDragging = false;
     this.currentTheme = 'default';
     this.lastHoverState = false; // 跟踪鼠标悬停状态变化
+    this.isPopupOpen = false; // 跟踪popup状态
+    this.hideTimer = null; // 延迟隐藏计时器
     // 设置合理的默认位置
     const defaultX = Math.max(100, window.innerWidth - 80);
     const defaultY = Math.max(100, window.innerHeight - 80);
@@ -55,6 +57,17 @@ class FloatingNavigation {
     // 绑定事件
     this.bindEvents();
     console.log('🎯 事件绑定完成');
+    
+    // 添加页面可见性监听，实现单实例效果
+    this.bindVisibilityEvents();
+    console.log('👁️ 页面可见性监听已绑定');
+    
+    // 添加设置变化监听，确保多标签页同步
+    this.bindStorageChangeListener();
+    console.log('💾 设置变化监听已绑定');
+    
+    // 初始检查页面可见性
+    this.handleVisibilityChange();
     
     this.isInitialized = true;
     console.log('✅ 悬浮导航初始化完成！');
@@ -851,6 +864,187 @@ class FloatingNavigation {
   }
 
 
+  // 绑定页面可见性事件，实现单实例效果
+  bindVisibilityEvents() {
+    // 监听页面可见性变化
+    document.addEventListener('visibilitychange', () => {
+      this.handleVisibilityChange();
+    });
+    
+    // 监听窗口焦点变化
+    window.addEventListener('focus', () => {
+      console.log('🎯 窗口获得焦点');
+      this.handleVisibilityChange();
+    });
+    
+    window.addEventListener('blur', () => {
+      console.log('🎯 窗口失去焦点');
+      this.handleVisibilityChange();
+    });
+    
+  }
+
+  // 绑定设置变化监听器，确保多标签页同步
+  bindStorageChangeListener() {
+    chrome.storage.onChanged.addListener((changes, areaName) => {
+      if (areaName === 'sync' && changes.floatingNavSettings) {
+        console.log('💾 检测到设置变化:', changes.floatingNavSettings);
+        this.handleStorageChange(changes.floatingNavSettings);
+      }
+    });
+  }
+
+  // 处理设置变化
+  async handleStorageChange(change) {
+    try {
+      const newSettings = change.newValue;
+      const oldSettings = change.oldValue || {};
+      
+      console.log('📋 设置变化详情:', {
+        old: oldSettings,
+        new: newSettings
+      });
+      
+      // 检查主题是否变化
+      if (newSettings.theme !== oldSettings.theme) {
+        console.log('🎨 主题变化:', oldSettings.theme, '->', newSettings.theme);
+        this.settings.theme = newSettings.theme;
+        this.changeTheme(newSettings.theme);
+      }
+      
+      // 检查自定义颜色是否变化
+      if (newSettings.customColor !== oldSettings.customColor) {
+        console.log('🌈 自定义颜色变化:', oldSettings.customColor, '->', newSettings.customColor);
+        this.settings.customColor = newSettings.customColor;
+        this.applyCustomColor(newSettings.customColor);
+      }
+      
+      // 检查按钮大小是否变化
+      if (newSettings.buttonSize !== oldSettings.buttonSize) {
+        console.log('📏 按钮大小变化:', oldSettings.buttonSize, '->', newSettings.buttonSize);
+        this.settings.buttonSize = newSettings.buttonSize;
+        this.applyButtonStyles();
+      }
+      
+      // 检查按钮透明度是否变化
+      if (newSettings.buttonOpacity !== oldSettings.buttonOpacity) {
+        console.log('👻 按钮透明度变化:', oldSettings.buttonOpacity, '->', newSettings.buttonOpacity);
+        this.settings.buttonOpacity = newSettings.buttonOpacity;
+        this.applyButtonStyles();
+      }
+      
+      // 检查启用按钮是否变化
+      if (JSON.stringify(newSettings.enabledButtons) !== JSON.stringify(oldSettings.enabledButtons)) {
+        console.log('🔘 启用按钮变化');
+        this.settings.enabledButtons = newSettings.enabledButtons;
+        this.updateFunctionButtons();
+      }
+      
+      // 检查位置是否变化（从设置页面调整）
+      if (newSettings.position && JSON.stringify(newSettings.position) !== JSON.stringify(oldSettings.position)) {
+        console.log('📍 位置变化:', oldSettings.position, '->', newSettings.position);
+        this.settings.position = newSettings.position;
+        this.updatePosition();
+      }
+      
+    } catch (error) {
+      console.error('❌ 处理设置变化失败:', error);
+    }
+  }
+
+  // 更新悬浮按钮位置
+  updatePosition() {
+    if (this.container && this.settings.position) {
+      this.container.style.left = `${this.settings.position.x}px`;
+      this.container.style.top = `${this.settings.position.y}px`;
+      console.log('📍 位置已更新到:', this.settings.position);
+    }
+  }
+
+  // 处理页面可见性变化
+  handleVisibilityChange() {
+    const isVisible = document.visibilityState === 'visible';
+    const hasFocus = document.hasFocus();
+    const shouldShow = isVisible && hasFocus;
+    
+    console.log('👁️ 页面可见性检查:', {
+      visibilityState: document.visibilityState,
+      hasFocus: hasFocus,
+      shouldShow: shouldShow,
+      isPopupOpen: this.isPopupOpen
+    });
+    
+    if (this.container) {
+      if (shouldShow || this.isPopupOpen) {
+        // 如果页面可见或popup打开，显示悬浮按钮
+        this.showFloatingNavWithDelay();
+      } else {
+        // 延迟隐藏，给popup打开时间
+        this.scheduleHideFloatingNav();
+      }
+    }
+  }
+
+  // 处理标签页激活状态
+  handleTabActivation(isActive) {
+    console.log('📋 标签页激活状态变化:', isActive);
+    if (this.container) {
+      if (isActive) {
+        this.showFloatingNav();
+      } else {
+        this.hideFloatingNav();
+      }
+    }
+  }
+
+  // 显示悬浮导航（带延迟清除）
+  showFloatingNavWithDelay() {
+    // 清除隐藏计时器
+    if (this.hideTimer) {
+      clearTimeout(this.hideTimer);
+      this.hideTimer = null;
+    }
+    this.showFloatingNav();
+  }
+
+  // 延迟隐藏悬浮导航
+  scheduleHideFloatingNav() {
+    // 清除之前的计时器
+    if (this.hideTimer) {
+      clearTimeout(this.hideTimer);
+    }
+    
+    // 延迟500ms隐藏，给popup打开时间
+    this.hideTimer = setTimeout(() => {
+      if (!this.isPopupOpen) {
+        this.hideFloatingNav();
+      }
+      this.hideTimer = null;
+    }, 500);
+  }
+
+  // 显示悬浮导航
+  showFloatingNav() {
+    if (this.container) {
+      this.container.style.display = 'block';
+      this.container.style.opacity = '1';
+      this.container.style.visibility = 'visible';
+      this.container.style.pointerEvents = 'auto';
+      console.log('👁️ 悬浮导航已显示');
+    }
+  }
+
+  // 隐藏悬浮导航
+  hideFloatingNav() {
+    if (this.container && !this.isPopupOpen) {
+      this.container.style.display = 'none';
+      this.container.style.opacity = '0';
+      this.container.style.visibility = 'hidden';
+      this.container.style.pointerEvents = 'none';
+      console.log('👁️ 悬浮导航已隐藏');
+    }
+  }
+
   // 显示通知方法
   showNotification(message, type = 'success') {
     const notification = document.createElement('div');
@@ -1300,6 +1494,35 @@ function handleMessage(message, sender, sendResponse) {
       
       console.log('📊 状态检查结果:', status);
       sendResponse({ success: true, status: status });
+      break;
+      
+    // 处理标签页激活状态变化
+    case 'tabActivated':
+      console.log('📋 收到标签页激活消息:', message.tabId, '当前是否激活:', message.isActive);
+      if (floatingNav && floatingNav.handleTabActivation) {
+        floatingNav.handleTabActivation(message.isActive);
+      }
+      sendResponse({ success: true });
+      break;
+      
+    // 处理popup状态变化
+    case 'popupOpened':
+      console.log('📋 Popup已打开');
+      if (floatingNav) {
+        floatingNav.isPopupOpen = true;
+        floatingNav.showFloatingNavWithDelay(); // 确保popup打开时悬浮按钮可见
+      }
+      sendResponse({ success: true });
+      break;
+      
+    case 'popupClosed':
+      console.log('📋 Popup已关闭');
+      if (floatingNav) {
+        floatingNav.isPopupOpen = false;
+        // 检查是否需要隐藏悬浮按钮
+        floatingNav.handleVisibilityChange();
+      }
+      sendResponse({ success: true });
       break;
       
     default:

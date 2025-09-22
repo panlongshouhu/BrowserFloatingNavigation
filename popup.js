@@ -9,6 +9,8 @@ class PopupManager {
     await this.loadSettings();
     this.bindEvents();
     this.updateUI();
+    // 通知content script popup已打开
+    this.notifyPopupOpened();
   }
 
   async loadSettings() {
@@ -181,12 +183,41 @@ class PopupManager {
       settings.theme = theme;
       await chrome.storage.sync.set({ floatingNavSettings: settings });
       
-      // 通知background script更新主题
-      chrome.runtime.sendMessage({ action: 'changeTheme', theme: theme });
+      // 向所有标签页广播主题变化
+      await this.broadcastThemeToAllTabs(theme);
       
-      console.log('主题已切换到:', theme);
+      console.log('主题已切换到:', theme, '并广播到所有标签页');
     } catch (error) {
       console.error('切换主题失败:', error);
+    }
+  }
+
+  // 向所有标签页广播主题变化
+  async broadcastThemeToAllTabs(theme) {
+    try {
+      // 获取所有标签页
+      const tabs = await chrome.tabs.query({});
+      console.log('📢 向', tabs.length, '个标签页广播主题变化:', theme);
+      
+      // 向每个标签页发送主题变化消息
+      const promises = tabs.map(tab => {
+        if (tab.id && !this.isSpecialUrl(tab.url || '')) {
+          return chrome.tabs.sendMessage(tab.id, {
+            action: 'changeTheme',
+            theme: theme
+          }).catch(error => {
+            // 忽略无法发送消息的标签页（可能没有content script）
+            console.log('跳过标签页:', tab.id, error.message);
+          });
+        }
+      });
+      
+      // 等待所有消息发送完成
+      await Promise.all(promises);
+      console.log('✅ 主题变化已广播到所有标签页');
+      
+    } catch (error) {
+      console.error('广播主题变化失败:', error);
     }
   }
 
@@ -195,7 +226,40 @@ class PopupManager {
     return specialProtocols.some(protocol => url.startsWith(protocol));
   }
 
+  // 通知content script popup已打开
+  async notifyPopupOpened() {
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tab && !this.isSpecialUrl(tab.url)) {
+        chrome.tabs.sendMessage(tab.id, { action: 'popupOpened' }).catch(() => {
+          // 忽略无法发送消息的情况
+        });
+        console.log('📋 已通知popup打开状态');
+      }
+    } catch (error) {
+      console.error('通知popup打开状态失败:', error);
+    }
+  }
+
+  // 通知content script popup已关闭
+  async notifyPopupClosed() {
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tab && !this.isSpecialUrl(tab.url)) {
+        chrome.tabs.sendMessage(tab.id, { action: 'popupClosed' }).catch(() => {
+          // 忽略无法发送消息的情况
+        });
+        console.log('📋 已通知popup关闭状态');
+      }
+    } catch (error) {
+      console.error('通知popup关闭状态失败:', error);
+    }
+  }
+
   closePopup() {
+    // 先通知popup即将关闭
+    this.notifyPopupClosed();
+    
     // 关闭弹窗
     setTimeout(() => {
       window.close();
@@ -205,7 +269,19 @@ class PopupManager {
 
 // 等待DOM加载完成后初始化
 document.addEventListener('DOMContentLoaded', () => {
-  new PopupManager();
+  const popupManager = new PopupManager();
+  
+  // 监听窗口关闭事件
+  window.addEventListener('beforeunload', () => {
+    popupManager.notifyPopupClosed();
+  });
+  
+  // 监听页面可见性变化（当popup失去焦点时）
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      popupManager.notifyPopupClosed();
+    }
+  });
 });
 
 // 处理快捷键
