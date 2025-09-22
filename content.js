@@ -399,7 +399,7 @@ class FloatingNavigation {
     this.hideTimer = setTimeout(() => {
       this.hideButtons();
       this.hideTimer = null;
-    }, 50); // 50ms延迟，快速响应鼠标移出
+    }, 20); // 50ms延迟，快速响应鼠标移出
   }
 
   startDrag(e) {
