@@ -556,6 +556,77 @@ body {
     letter-spacing: 0.3px;
 }
 
+.setting-item .setting-label {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0 !important;
+    min-height: 30px; /* 确保与开关高度一致 */
+    line-height: 1.2;
+    padding-right: 70px; /* 为开关留出空间 */
+    font-size: 18px !important;
+    font-weight: 600 !important;
+    color: #2d3748 !important;
+    cursor: pointer;
+    position: relative;
+}
+
+/* position: relative 已在 .setting-item .setting-label 中定义 */
+
+/* 开关容器样式 */
+.setting-label .toggle-switch {
+    width: 60px;
+    height: 30px;
+    margin: 0;
+    opacity: 0; /* 隐藏原生checkbox */
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 2;
+    cursor: pointer;
+}
+
+/* 自定义开关外观 */
+.setting-label .slider {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 60px;
+    height: 30px;
+    background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e0 100%);
+    border-radius: 25px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    border: 2px solid transparent;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    pointer-events: none; /* 让点击事件穿透到checkbox */
+}
+
+/* 开关滑块 */
+.setting-label .slider::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 21px;
+    height: 21px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* 选中状态 */
+.setting-label .toggle-switch:checked + .slider {
+    background: #667eea;
+}
+
+.setting-label .toggle-switch:checked + .slider::before {
+    transform: translateX(25px);
+}
+
+/* 文字部分样式已整合到.setting-item .setting-label中 */
+
 .setting-item label::before {
     content: '';
     position: absolute;
@@ -574,13 +645,7 @@ body {
     opacity: 1;
 }
 
-.setting-label {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    font-weight: 500;
-    gap: 10px;
-}
+/* 重复的setting-label样式已移除，使用上面更具体的.setting-item .setting-label样式 */
 
 .setting-desc {
     color: #718096;
@@ -590,41 +655,7 @@ body {
     font-weight: 400;
 }
 
-/* 切换开关 */
-.toggle-switch {
-    position: relative;
-    width: 60px;
-    height: 30px;
-    margin-left: auto;
-    appearance: none;
-    background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e0 100%);
-    border-radius: 25px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    cursor: pointer;
-    border: 2px solid transparent;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
-
-.toggle-switch:checked {
-    background: #667eea;
-}
-
-.toggle-switch::before {
-    content: '';
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 21px;
-    height: 21px;
-    background: white;
-    border-radius: 50%;
-    transition: transform 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.toggle-switch:checked::before {
-    transform: translateX(25px);
-}
+/* 原有的toggle-switch样式已移至.setting-label内部 */
 
 /* 选择框 */
 .select-input {
