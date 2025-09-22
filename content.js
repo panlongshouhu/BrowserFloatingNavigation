@@ -16,6 +16,7 @@ class FloatingNavigation {
       buttonOpacity: 90, // 默认90%透明度
       theme: 'default',
       customColor: '#3b82f6',
+      isWelcomeCompleted: false, // 重要：首次安装时默认为false
       enabledButtons: {
         scrollTop: true,
         scrollBottom: true,
@@ -41,8 +42,9 @@ class FloatingNavigation {
     console.log('⚙️  设置已加载:', this.settings);
     
     // 检查是否已完成欢迎设置，如果没有则不显示悬浮导航
-    if (this.settings.isWelcomeCompleted === false) {
-      console.log('👋 检测到首次安装，等待用户完成欢迎设置后再显示悬浮导航');
+    if (!this.settings.isWelcomeCompleted) {
+      console.log('👋 检测到首次安装或未完成设置，等待用户完成欢迎设置后再显示悬浮导航');
+      console.log('📋 当前isWelcomeCompleted值:', this.settings.isWelcomeCompleted);
       this.isInitialized = true;
       return;
     }
@@ -64,9 +66,48 @@ class FloatingNavigation {
       const result = await chrome.storage.sync.get(['floatingNavSettings']);
       if (result.floatingNavSettings) {
         this.settings = { ...this.settings, ...result.floatingNavSettings };
+        
+        // 清理和转换可能的旧格式设置
+        let needsSave = false;
+        
+        // 处理buttonSize旧格式
+        if (typeof this.settings.buttonSize === 'string') {
+          switch (this.settings.buttonSize.toLowerCase()) {
+            case 'small': this.settings.buttonSize = 60; break;
+            case 'medium': this.settings.buttonSize = 80; break;
+            case 'large': this.settings.buttonSize = 100; break;
+            default: this.settings.buttonSize = 80;
+          }
+          needsSave = true;
+          console.log('🔄 loadSettings中转换buttonSize格式:', this.settings.buttonSize);
+        }
+        
+        // 确保buttonSize是有效数字
+        if (!this.settings.buttonSize || isNaN(this.settings.buttonSize)) {
+          this.settings.buttonSize = 80;
+          needsSave = true;
+        }
+        
+        // 确保buttonOpacity是有效数字
+        if (!this.settings.buttonOpacity || isNaN(this.settings.buttonOpacity)) {
+          this.settings.buttonOpacity = 90;
+          needsSave = true;
+        }
+        
+        // 确保isWelcomeCompleted有明确的布尔值
+        if (typeof this.settings.isWelcomeCompleted !== 'boolean') {
+          this.settings.isWelcomeCompleted = false;
+          needsSave = true;
+        }
+        
+        // 如果进行了数据清理，保存更新的设置
+        if (needsSave) {
+          console.log('💾 保存清理后的设置');
+          await this.saveSettings();
+        }
       }
     } catch (error) {
-      console.log('设置加载失败，使用默认设置');
+      console.log('设置加载失败，使用默认设置:', error);
     }
   }
 
@@ -98,14 +139,6 @@ class FloatingNavigation {
     this.container.style.left = adjustedPosition.x + 'px';
     this.container.style.top = adjustedPosition.y + 'px';
     
-    // 应用按钮大小和透明度
-    this.applyButtonStyles();
-    
-    // 如果是自定义颜色主题，应用自定义颜色
-    if (this.settings.theme === 'custom' && this.settings.customColor) {
-      this.applyCustomColorStyles();
-    }
-    
     console.log('📍 设置位置:', adjustedPosition);
     console.log('📏 按钮大小:', this.settings.buttonSize + '%');
     console.log('🎭 按钮透明度:', this.settings.buttonOpacity + '%');
@@ -119,6 +152,16 @@ class FloatingNavigation {
     this.container.appendChild(this.mainButton);
     console.log('🎯 主按钮已创建');
 
+    // 在按钮创建后立即应用样式
+    this.applyButtonStyles();
+    console.log('🎨 样式已应用到主按钮');
+    
+    // 如果是自定义颜色主题，应用自定义颜色
+    if (this.settings.theme === 'custom' && this.settings.customColor) {
+      this.applyCustomColorStyles();
+      console.log('🌈 自定义颜色已应用');
+    }
+
     // 创建展开的按钮组
     this.buttonGroup = document.createElement('div');
     this.buttonGroup.className = 'floating-nav-buttons';
@@ -129,6 +172,12 @@ class FloatingNavigation {
     console.log('🔧 功能按钮已创建');
     
     this.container.appendChild(this.buttonGroup);
+    
+    // 在所有按钮创建后再次确保样式正确应用
+    setTimeout(() => {
+      this.applyButtonStyles();
+      console.log('🎨 延迟确保所有按钮样式正确应用');
+    }, 10);
     
     // 确保body存在再添加 - 快速添加策略
     if (document.body) {
@@ -226,14 +275,80 @@ class FloatingNavigation {
   applyButtonStyles() {
     if (!this.container) return;
     
-    const sizePercent = this.settings.buttonSize / 100; // 转换为小数
-    const opacityPercent = this.settings.buttonOpacity / 100; // 转换为小数
+    // 确保按钮大小和透明度是有效数字（双重保险）
+    let buttonSize = this.settings.buttonSize;
+    let buttonOpacity = this.settings.buttonOpacity;
+    let needsSave = false;
+    
+    // 最后的安全检查，防止任何未捕获的NaN值
+    if (!buttonSize || isNaN(buttonSize) || typeof buttonSize === 'string') {
+      console.warn('⚠️ applyButtonStyles中发现无效的buttonSize:', buttonSize, '使用默认值80');
+      buttonSize = 80;
+      this.settings.buttonSize = buttonSize;
+      needsSave = true;
+    }
+    
+    if (!buttonOpacity || isNaN(buttonOpacity) || typeof buttonOpacity === 'string') {
+      console.warn('⚠️ applyButtonStyles中发现无效的buttonOpacity:', buttonOpacity, '使用默认值90');
+      buttonOpacity = 90;
+      this.settings.buttonOpacity = buttonOpacity;
+      needsSave = true;
+    }
+    
+    const sizePercent = Math.max(0.3, Math.min(1.5, buttonSize / 100)); // 限制在30%-150%之间
+    const opacityPercent = Math.max(0.1, Math.min(1, buttonOpacity / 100)); // 限制在10%-100%之间
+    
+    console.log('🔧 设置值处理结果:', {
+      原始buttonSize: this.settings.buttonSize,
+      处理后buttonSize: buttonSize,
+      原始buttonOpacity: this.settings.buttonOpacity, 
+      处理后buttonOpacity: buttonOpacity,
+      最终sizePercent: sizePercent,
+      最终opacityPercent: opacityPercent
+    });
     
     // 设置CSS变量，用于动态控制按钮大小和透明度
     this.container.style.setProperty('--button-size-scale', sizePercent);
     this.container.style.setProperty('--button-opacity', opacityPercent);
     
+    // 强制触发样式重新计算，确保按钮立即应用新样式
+    this.container.offsetHeight; // 读取样式属性触发重新计算
+    
+    // 如果主按钮存在，直接设置其样式确保可见
+    if (this.mainButton) {
+      const mainButtonStyle = window.getComputedStyle(this.mainButton);
+      console.log('🎯 主按钮实时样式:', {
+        display: mainButtonStyle.display,
+        width: mainButtonStyle.width,
+        height: mainButtonStyle.height,
+        opacity: mainButtonStyle.opacity,
+        visibility: mainButtonStyle.visibility
+      });
+      
+      // 如果检测到主按钮不可见，强制设置为可见
+      if (mainButtonStyle.width === '0px' || mainButtonStyle.height === '0px' || mainButtonStyle.opacity === '0') {
+        console.warn('⚠️ 检测到主按钮不可见，强制应用样式');
+        this.mainButton.style.width = `calc(var(--main-button-size) * ${sizePercent})`;
+        this.mainButton.style.height = `calc(var(--main-button-size) * ${sizePercent})`;
+        this.mainButton.style.opacity = opacityPercent;
+        this.mainButton.style.display = 'flex';
+        this.mainButton.style.visibility = 'visible';
+      }
+    }
+    
     console.log('🎨 应用按钮样式 - 大小:', sizePercent, '透明度:', opacityPercent);
+    console.log('📊 原始设置值 - buttonSize:', buttonSize, 'buttonOpacity:', buttonOpacity);
+    
+    // 验证CSS变量是否正确设置
+    const actualSizeScale = this.container.style.getPropertyValue('--button-size-scale');
+    const actualOpacity = this.container.style.getPropertyValue('--button-opacity');
+    console.log('✅ CSS变量验证 - size-scale:', actualSizeScale, 'opacity:', actualOpacity);
+    
+    // 如果在applyButtonStyles中发现了需要修复的值，保存设置
+    if (needsSave) {
+      console.log('💾 保存applyButtonStyles中修复的设置');
+      this.saveSettings();
+    }
   }
 
   bindEvents() {
@@ -702,17 +817,276 @@ class FloatingNavigation {
   // 完成欢迎设置，启动悬浮导航
   async completeWelcomeSetup() {
     console.log('🎉 用户完成欢迎设置，开始启动悬浮导航');
+    console.log('📋 当前设置状态:', {
+      isWelcomeCompleted: this.settings.isWelcomeCompleted,
+      containerExists: !!this.container,
+      isInitialized: this.isInitialized,
+      currentUrl: window.location.href
+    });
     
     // 更新欢迎完成标记
     this.settings.isWelcomeCompleted = true;
     await this.saveSettings();
+    console.log('💾 isWelcomeCompleted已设置为true并保存');
     
     // 如果悬浮导航还没有初始化，现在创建它
     if (!this.container) {
+      console.log('🔨 首次创建悬浮导航UI...');
+      
+      // 确保所有设置都有默认值，并转换旧格式
+      if (!this.settings.buttonSize || typeof this.settings.buttonSize === 'string') {
+        this.settings.buttonSize = 80;
+      }
+      if (!this.settings.buttonOpacity || typeof this.settings.buttonOpacity === 'string') {
+        this.settings.buttonOpacity = 90;
+      }
+      if (!this.settings.theme) this.settings.theme = 'default';
+      if (!this.settings.customColor) this.settings.customColor = '#3b82f6';
+      
+      console.log('⚙️ 确保设置完整:', {
+        buttonSize: this.settings.buttonSize,
+        buttonOpacity: this.settings.buttonOpacity,
+        theme: this.settings.theme,
+        customColor: this.settings.customColor
+      });
+      
       this.createFloatingNav();
       this.bindEvents();
+      
+      // 再次保存设置确保数据持久化
+      await this.saveSettings();
+      
+      // 多层次确保样式应用
+      setTimeout(() => {
+        if (this.container && this.mainButton) {
+          console.log('🎨 第一次延迟样式应用...');
+          this.applyButtonStyles();
+          
+          // 验证容器是否可见
+          const computedStyle = window.getComputedStyle(this.container);
+          const isVisible = computedStyle.display !== 'none' && computedStyle.visibility !== 'hidden' && computedStyle.opacity !== '0';
+          console.log('👁️ 容器可见性检查:', {
+            display: computedStyle.display,
+            visibility: computedStyle.visibility,
+            opacity: computedStyle.opacity,
+            isVisible: isVisible,
+            containerExists: !!this.container,
+            containerInDOM: document.body.contains(this.container)
+          });
+          
+          if (!isVisible) {
+            console.warn('⚠️ 容器创建后不可见，强制设置为可见');
+            this.container.style.display = 'block';
+            this.container.style.visibility = 'visible';
+            
+            // 再次应用样式
+            this.applyButtonStyles();
+          }
+          
+          // 检查主按钮的最终状态
+          const buttonStyle = window.getComputedStyle(this.mainButton);
+          console.log('🎯 主按钮最终样式检查:', {
+            width: buttonStyle.width,
+            height: buttonStyle.height,
+            opacity: buttonStyle.opacity,
+            display: buttonStyle.display,
+            visibility: buttonStyle.visibility,
+            transform: buttonStyle.transform
+          });
+          
+          // 如果主按钮仍然不可见，进行最后的强制修复
+          if (buttonStyle.width === '0px' || buttonStyle.height === '0px' || buttonStyle.opacity === '0') {
+            console.error('❌ 主按钮在延迟检查后仍不可见，执行强制修复');
+            const sizePercent = Math.max(0.3, Math.min(1.5, (this.settings.buttonSize || 80) / 100));
+            const opacityPercent = Math.max(0.1, Math.min(1, (this.settings.buttonOpacity || 90) / 100));
+            
+            this.mainButton.style.width = `${56 * sizePercent}px`;
+            this.mainButton.style.height = `${56 * sizePercent}px`;
+            this.mainButton.style.opacity = opacityPercent.toString();
+            this.mainButton.style.display = 'flex';
+            this.mainButton.style.visibility = 'visible';
+            
+            console.log('🔧 强制修复完成，主按钮应该现在可见了');
+          }
+        }
+      }, 100);
+      
+      // 再次确保样式应用（双保险）
+      setTimeout(() => {
+        if (this.mainButton) {
+          console.log('🎨 第二次延迟样式确保...');
+          this.applyButtonStyles();
+        }
+      }, 200);
+      
       console.log('✅ 悬浮导航已启动！');
+    } else {
+      console.log('✅ 悬浮导航容器已存在，无需重新创建');
+      
+      // 但是验证现有容器是否正常显示
+      if (this.container) {
+        const computedStyle = window.getComputedStyle(this.container);
+        const isVisible = computedStyle.display !== 'none' && computedStyle.visibility !== 'hidden' && computedStyle.opacity !== '0';
+        console.log('🔍 现有容器检查:', {
+          exists: true,
+          inDOM: document.body.contains(this.container),
+          visible: isVisible,
+          display: computedStyle.display,
+          opacity: computedStyle.opacity
+        });
+        
+        if (!isVisible || !document.body.contains(this.container)) {
+          console.warn('⚠️ 现有容器有问题，重新创建...');
+          this.container.remove();
+          this.container = null;
+          // 递归调用重新创建
+          return this.completeWelcomeSetup();
+        }
+      }
     }
+  }
+
+  // 调试用：强制重新初始化悬浮导航
+  forceReinitialize() {
+    console.log('🔄 强制重新初始化悬浮导航');
+    
+    // 移除现有容器
+    if (this.container) {
+      this.container.remove();
+      this.container = null;
+    }
+    
+    // 重新创建
+    this.createFloatingNav();
+    this.bindEvents();
+    
+    // 应用样式
+    setTimeout(() => {
+      this.applyButtonStyles();
+      console.log('✅ 强制重新初始化完成');
+    }, 50);
+  }
+
+  // 调试用：诊断第一次安装问题
+  diagnosisFirstInstallIssue() {
+    console.log('🔍 开始诊断第一次安装问题...');
+    
+    const diagnosis = {
+      floatingNavExists: !!this,
+      isInitialized: this.isInitialized,
+      containerExists: !!this.container,
+      containerInDOM: false,
+      containerVisible: false,
+      settings: this.settings,
+      currentUrl: window.location.href,
+      documentReady: document.readyState,
+      bodyExists: !!document.body
+    };
+    
+    if (this.container) {
+      diagnosis.containerInDOM = document.body.contains(this.container);
+      const computedStyle = window.getComputedStyle(this.container);
+      diagnosis.containerVisible = computedStyle.display !== 'none' && 
+                                  computedStyle.visibility !== 'hidden' && 
+                                  computedStyle.opacity !== '0';
+      diagnosis.containerStyle = {
+        display: computedStyle.display,
+        visibility: computedStyle.visibility,
+        opacity: computedStyle.opacity,
+        width: computedStyle.width,
+        height: computedStyle.height,
+        position: computedStyle.position,
+        left: computedStyle.left,
+        top: computedStyle.top,
+        zIndex: computedStyle.zIndex
+      };
+      
+      if (this.mainButton) {
+        const buttonStyle = window.getComputedStyle(this.mainButton);
+        diagnosis.mainButtonStyle = {
+          display: buttonStyle.display,
+          visibility: buttonStyle.visibility,
+          opacity: buttonStyle.opacity,
+          width: buttonStyle.width,
+          height: buttonStyle.height
+        };
+      }
+    }
+    
+    console.log('🔍 诊断结果:', diagnosis);
+    
+    // 给出建议
+    const suggestions = [];
+    if (!diagnosis.isInitialized) {
+      suggestions.push('FloatingNavigation未初始化，可能是构造函数执行失败');
+    }
+    if (!diagnosis.containerExists) {
+      suggestions.push('容器不存在，可能是createFloatingNav()未被调用或执行失败');
+    }
+    if (diagnosis.containerExists && !diagnosis.containerInDOM) {
+      suggestions.push('容器已创建但未添加到DOM，可能是document.body不可用');
+    }
+    if (diagnosis.containerExists && diagnosis.containerInDOM && !diagnosis.containerVisible) {
+      suggestions.push('容器在DOM中但不可见，可能是样式问题(display:none, opacity:0等)');
+    }
+    if (!diagnosis.settings?.isWelcomeCompleted) {
+      suggestions.push('欢迎设置未完成，这是正常的首次安装状态');
+    }
+    
+    if (suggestions.length > 0) {
+      console.log('💡 诊断建议:', suggestions);
+    } else {
+      console.log('✅ 未发现明显问题，悬浮导航应该正常显示');
+    }
+    
+    return diagnosis;
+  }
+
+  // 调试用：修复设置格式问题
+  async fixSettingsFormat() {
+    console.log('🔧 开始修复设置格式...');
+    console.log('🔍 修复前的设置:', this.settings);
+    
+    let needsSave = false;
+    
+    // 修复buttonSize格式
+    if (typeof this.settings.buttonSize === 'string') {
+      switch (this.settings.buttonSize.toLowerCase()) {
+        case 'small': this.settings.buttonSize = 60; break;
+        case 'medium': this.settings.buttonSize = 80; break;
+        case 'large': this.settings.buttonSize = 100; break;
+        default: this.settings.buttonSize = 80;
+      }
+      needsSave = true;
+      console.log('🔄 修复buttonSize:', this.settings.buttonSize);
+    }
+    
+    // 修复buttonOpacity格式
+    if (typeof this.settings.buttonOpacity === 'string' || !this.settings.buttonOpacity || isNaN(this.settings.buttonOpacity)) {
+      this.settings.buttonOpacity = 90;
+      needsSave = true;
+      console.log('🔄 修复buttonOpacity:', this.settings.buttonOpacity);
+    }
+    
+    // 修复isWelcomeCompleted格式
+    if (typeof this.settings.isWelcomeCompleted !== 'boolean') {
+      this.settings.isWelcomeCompleted = true; // 如果用户在调用这个方法，说明已经完成设置
+      needsSave = true;
+      console.log('🔄 修复isWelcomeCompleted:', this.settings.isWelcomeCompleted);
+    }
+    
+    if (needsSave) {
+      await this.saveSettings();
+      console.log('💾 设置格式修复完成并已保存');
+      
+      // 重新应用样式
+      this.applyButtonStyles();
+      console.log('🎨 样式已重新应用');
+    } else {
+      console.log('✅ 设置格式无需修复');
+    }
+    
+    console.log('🔍 修复后的设置:', this.settings);
   }
 
   // 更新设置
@@ -819,6 +1193,22 @@ function handleMessage(message, sender, sendResponse) {
       floatingNav.completeWelcomeSetup();
       break;
       
+    case 'forceReinitialize':
+      floatingNav.forceReinitialize();
+      sendResponse({ success: true, message: '强制重新初始化完成' });
+      break;
+      
+    case 'diagnosis':
+      const diagnosisResult = floatingNav.diagnosisFirstInstallIssue();
+      sendResponse({ success: true, diagnosis: diagnosisResult });
+      break;
+      
+    case 'fixSettingsFormat':
+      console.log('🔧 手动修复设置格式...');
+      floatingNav.fixSettingsFormat();
+      sendResponse({ success: true, message: '设置格式已修复' });
+      break;
+      
     // 处理来自popup的快捷操作
     case 'toggleNav':
       console.log('🎯 切换悬浮导航显示/隐藏');
@@ -845,6 +1235,39 @@ function handleMessage(message, sender, sendResponse) {
       console.log('🎯 刷新页面');
       window.location.reload();
       sendResponse({ success: true });
+      break;
+      
+    case 'ping':
+      console.log('🏓 收到ping消息，回复pong');
+      sendResponse({ 
+        success: true, 
+        message: 'pong',
+        floatingNavExists: !!floatingNav?.container,
+        isInitialized: floatingNav?.isInitialized || false,
+        currentUrl: window.location.href
+      });
+      break;
+      
+    case 'getStatus':
+      console.log('📊 获取悬浮导航状态');
+      const status = {
+        initialized: !!floatingNav,
+        containerExists: !!floatingNav?.container,
+        containerVisible: false,
+        settings: floatingNav?.settings || null,
+        currentUrl: window.location.href
+      };
+      
+      if (floatingNav?.container) {
+        const computedStyle = window.getComputedStyle(floatingNav.container);
+        status.containerVisible = computedStyle.display !== 'none' && 
+                                 computedStyle.visibility !== 'hidden' && 
+                                 computedStyle.opacity !== '0';
+        status.containerInDOM = document.body.contains(floatingNav.container);
+      }
+      
+      console.log('📊 状态检查结果:', status);
+      sendResponse({ success: true, status: status });
       break;
       
     default:
