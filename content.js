@@ -11,6 +11,12 @@ class FloatingNavigation {
     this.showTimer = null; // 延迟显示计时器
     this.lastStateChangeTime = 0; // 防抖：记录最后状态变化时间
     this.stateChangeLock = false; // 状态变化锁，防止频繁切换
+    
+    // 防抖保存设置
+    this.saveSettingsDebounced = this.debounce(this.saveSettings.bind(this), 1000);
+    this.savePositionDebounced = this.debounce(this.savePositionOnly.bind(this), 500);
+    this.lastSaveTime = 0; // 跟踪最后保存时间
+    this.saveQueue = new Map(); // 保存队列，避免重复保存
     // 设置合理的默认位置
     const defaultX = Math.max(100, window.innerWidth - 80);
     const defaultY = Math.max(100, window.innerHeight - 80);
@@ -38,6 +44,54 @@ class FloatingNavigation {
       }
     };
     this.init();
+  }
+
+  // 防抖函数
+  debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
+
+  // 检查存储配额和频率限制
+  async checkStorageQuota() {
+    const now = Date.now();
+    const timeSinceLastSave = now - this.lastSaveTime;
+    
+    // 限制最小保存间隔为500ms
+    if (timeSinceLastSave < 500) {
+      console.log('⏳ 保存频率限制，跳过本次保存');
+      return false;
+    }
+    
+    return true;
+  }
+
+  // 只保存位置信息（用于拖拽）
+  async savePositionOnly() {
+    if (!await this.checkStorageQuota()) return;
+    
+    try {
+      this.lastSaveTime = Date.now();
+      
+      // 获取当前完整设置
+      const result = await chrome.storage.sync.get(['floatingNavSettings']);
+      const currentSettings = result.floatingNavSettings || {};
+      
+      // 只更新位置
+      currentSettings.position = this.settings.position;
+      
+      await chrome.storage.sync.set({ floatingNavSettings: currentSettings });
+      console.log('📍 位置已保存:', this.settings.position);
+    } catch (error) {
+      console.error('❌ 位置保存失败:', error);
+    }
   }
 
   async init() {
@@ -135,15 +189,83 @@ class FloatingNavigation {
   }
 
   async saveSettings() {
+    if (!await this.checkStorageQuota()) {
+      console.log('⏳ 设置保存被限流，将稍后重试');
+      // 使用防抖重试
+      setTimeout(() => this.saveSettingsDebounced(), 1000);
+      return;
+    }
+    
     try {
+      this.lastSaveTime = Date.now();
+      
+      // 处理保存队列中的设置
+      if (this.saveQueue.size > 0) {
+        console.log('📦 处理保存队列:', Object.fromEntries(this.saveQueue));
+        // 将队列中的设置合并到当前设置
+        for (const [key, value] of this.saveQueue) {
+          this.settings[key] = value;
+        }
+        // 清空队列
+        this.saveQueue.clear();
+      }
+      
       // 包含手动隐藏状态
       const settingsToSave = {
         ...this.settings,
         isManuallyHidden: this.isManuallyHidden
       };
+      
       await chrome.storage.sync.set({ floatingNavSettings: settingsToSave });
+      console.log('💾 设置已保存');
     } catch (error) {
-      console.error('设置保存失败:', error);
+      console.error('❌ 设置保存失败:', error);
+      if (error.message.includes('MAX_WRITE_OPERATIONS_PER_MINUTE')) {
+        console.log('🚫 存储配额超限，将在2秒后重试');
+        // 延迟重试，保持队列数据
+        setTimeout(() => this.saveSettingsDebounced(), 2000);
+      }
+    }
+  }
+
+  // 部分更新设置（不覆盖其他设置）
+  async updateSettings(partialSettings) {
+    if (!await this.checkStorageQuota()) {
+      console.log('⏳ 部分设置更新被限流，使用防抖重试');
+      // 将更新添加到队列中
+      Object.assign(this.saveQueue, partialSettings);
+      this.saveSettingsDebounced();
+      return;
+    }
+    
+    try {
+      this.lastSaveTime = Date.now();
+      
+      // 先从存储中获取当前完整设置
+      const result = await chrome.storage.sync.get(['floatingNavSettings']);
+      const currentSettings = result.floatingNavSettings || {};
+      
+      // 只更新指定的设置项
+      const updatedSettings = {
+        ...currentSettings,
+        ...partialSettings
+      };
+      
+      // 更新本地设置
+      Object.assign(this.settings, partialSettings);
+      
+      // 保存到存储
+      await chrome.storage.sync.set({ floatingNavSettings: updatedSettings });
+      
+      console.log('🔄 部分设置已更新:', partialSettings);
+    } catch (error) {
+      console.error('❌ 部分设置更新失败:', error);
+      if (error.message.includes('MAX_WRITE_OPERATIONS_PER_MINUTE')) {
+        console.log('🚫 存储配额超限，添加到队列稍后处理');
+        Object.assign(this.saveQueue, partialSettings);
+        setTimeout(() => this.saveSettingsDebounced(), 2000);
+      }
+      throw error;
     }
   }
 
@@ -186,10 +308,10 @@ class FloatingNavigation {
     this.applyButtonStyles();
     console.log('🎨 样式已应用到主按钮');
     
-    // 如果是自定义颜色主题，应用自定义颜色
+    // 如果是自定义颜色主题，应用自定义颜色（同步应用，不保存）
     if (this.settings.theme === 'custom' && this.settings.customColor) {
       this.applyCustomColorStyles();
-      console.log('🌈 自定义颜色已应用');
+      console.log('🌈 自定义颜色已恢复:', this.settings.customColor);
     }
 
     // 创建展开的按钮组
@@ -728,7 +850,7 @@ class FloatingNavigation {
       };
     };
 
-    const mouseUpHandler = () => {
+    const mouseUpHandler = async () => {
       this.isDragging = false;
       
       // 恢复样式
@@ -736,10 +858,9 @@ class FloatingNavigation {
       this.container.style.cursor = '';
       this.container.style.transition = '';
       
-      // 保存最终位置
-      this.saveSettings();
-      
-      console.log('🖱️ 拖拽结束，最终位置:', this.settings.position);
+      // 使用专门的位置保存方法，避免频繁操作
+      this.savePositionDebounced();
+      console.log('🖱️ 拖拽结束，位置将保存:', this.settings.position);
       
       // 重置位置缓存，因为按钮位置已改变
       this.resetPositionCache();
@@ -1426,29 +1547,55 @@ class FloatingNavigation {
   }
 
   // 应用自定义颜色
-  applyCustomColor(color) {
+  async applyCustomColor(color) {
     console.log('🎨 应用自定义颜色:', color);
     
     if (!this.container) {
       console.warn('⚠️ 容器不存在，无法应用自定义颜色');
-      return;
+      throw new Error('容器不存在');
     }
     
-    // 生成悬停颜色（比原色稍深）
-    const hoverColor = this.darkenColor(color);
-    
-    // 设置CSS变量
-    this.container.style.setProperty('--custom-color', color);
-    this.container.style.setProperty('--custom-color-hover', hoverColor);
-    
-    // 切换到自定义主题类
-    this.container.className = `floating-nav-container theme-custom`;
-    this.currentTheme = 'custom';
-    this.settings.customColor = color;
-    this.settings.theme = 'custom';
-    
-    this.saveSettings();
-    console.log('✅ 自定义颜色已应用:', color);
+    try {
+      // 立即应用视觉效果，不等待保存完成
+      const hoverColor = this.darkenColor(color);
+      
+      // 设置CSS变量
+      this.container.style.setProperty('--custom-color', color);
+      this.container.style.setProperty('--custom-color-hover', hoverColor);
+      
+      // 切换到自定义主题类
+      this.container.className = `floating-nav-container theme-custom`;
+      this.currentTheme = 'custom';
+      
+      // 更新本地设置（立即更新，不等待存储）
+      this.settings.customColor = color;
+      this.settings.theme = 'custom';
+      
+      console.log('✅ 自定义颜色视觉效果已应用:', color);
+      
+      // 异步保存设置，使用防抖避免频繁保存
+      if (!await this.checkStorageQuota()) {
+        console.log('⏳ 颜色设置保存被限流，使用防抖处理');
+        // 将颜色设置添加到保存队列
+        this.saveQueue.set('customColor', color);
+        this.saveQueue.set('theme', 'custom');
+        this.saveSettingsDebounced();
+      } else {
+        // 直接保存
+        await this.updateSettings({
+          customColor: color,
+          theme: 'custom'
+        });
+      }
+      
+    } catch (error) {
+      console.error('❌ 应用自定义颜色失败:', error);
+      // 尝试恢复到之前的状态
+      if (this.container && this.currentTheme !== 'custom') {
+        this.container.className = `floating-nav-container theme-${this.currentTheme}`;
+      }
+      throw error;
+    }
   }
   
   // 应用自定义颜色样式（不改变主题设置，仅设置CSS变量）
@@ -1743,7 +1890,20 @@ function handleMessage(message, sender, sendResponse) {
       break;
       
     case 'applyCustomColor':
-      floatingNav.applyCustomColor(message.color);
+      // 异步处理自定义颜色应用
+      if (floatingNav && typeof floatingNav.applyCustomColor === 'function') {
+        floatingNav.applyCustomColor(message.color)
+          .then(() => {
+            sendResponse({ success: true, message: '自定义颜色应用成功' });
+          })
+          .catch((error) => {
+            console.error('应用自定义颜色失败:', error);
+            sendResponse({ success: false, error: error.message });
+          });
+        return true; // 保持消息通道打开以支持异步响应
+      } else {
+        sendResponse({ success: false, error: '悬浮导航未初始化' });
+      }
       break;
       
     case 'completeWelcome':

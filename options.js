@@ -627,23 +627,95 @@ class OptionsManager {
     }
   }
 
-  applyCustomColor() {
+  async applyCustomColor() {
     const customColor = document.getElementById('customColor').value;
     
-    // 保存自定义颜色
-    this.settings.customColor = customColor;
-    this.settings.theme = 'custom';
-    
-    this.saveSettings();
-    this.updateThemeSelection();
-    
-    // 通知content script应用自定义颜色
-    chrome.runtime.sendMessage({
-      action: 'applyCustomColor',
-      color: customColor
-    });
-    
-    this.showStatus(`已应用自定义颜色: ${customColor}`, 'success');
+    try {
+      // 保存自定义颜色到设置
+      this.settings.customColor = customColor;
+      this.settings.theme = 'custom';
+      
+      await this.saveSettings();
+      this.updateThemeSelection();
+      
+      // 通知所有标签页应用自定义颜色
+      const tabs = await chrome.tabs.query({});
+      let successCount = 0;
+      let failCount = 0;
+      
+      // 并行发送消息到所有标签页，添加超时处理
+      const promises = tabs.map(async (tab) => {
+        try {
+          // 添加消息超时处理
+          const response = await Promise.race([
+            chrome.tabs.sendMessage(tab.id, {
+              action: 'applyCustomColor',
+              color: customColor
+            }),
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('消息超时')), 3000)
+            )
+          ]);
+          
+          if (response && response.success) {
+            successCount++;
+          } else {
+            console.warn(`标签页 ${tab.id} 应用颜色失败:`, response?.error || '未知错误');
+            failCount++;
+          }
+        } catch (error) {
+          console.warn(`标签页 ${tab.id} 消息发送失败:`, error.message);
+          failCount++;
+          
+          // 如果是特定页面类型（扩展页面、chrome页面等），跳过重试
+          if (error.message.includes('Could not establish connection') || 
+              error.message.includes('scripted') ||
+              error.message.includes('extensions')) {
+            return;
+          }
+          
+          // 尝试注入content script后重试
+          try {
+            await chrome.scripting.executeScript({
+              target: { tabId: tab.id },
+              files: ['content.js']
+            });
+            
+            // 重试发送消息，也添加超时
+            const retryResponse = await Promise.race([
+              chrome.tabs.sendMessage(tab.id, {
+                action: 'applyCustomColor',
+                color: customColor
+              }),
+              new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('重试消息超时')), 2000)
+              )
+            ]);
+            
+            if (retryResponse && retryResponse.success) {
+              successCount++;
+              failCount--;
+            } else {
+              console.warn(`标签页 ${tab.id} 重试后仍失败:`, retryResponse?.error);
+            }
+          } catch (retryError) {
+            console.warn(`标签页 ${tab.id} 重试失败:`, retryError.message);
+          }
+        }
+      });
+      
+      await Promise.allSettled(promises);
+      
+      if (successCount > 0) {
+        this.showStatus(`已应用自定义颜色: ${customColor} (成功: ${successCount}个标签页)`, 'success');
+      } else {
+        this.showStatus('应用颜色失败，请刷新页面后重试', 'error');
+      }
+      
+    } catch (error) {
+      console.error('应用自定义颜色失败:', error);
+      this.showStatus('设置保存失败，请重试', 'error');
+    }
   }
 
   resetCustomColor() {
@@ -658,7 +730,7 @@ class OptionsManager {
     this.showStatus('颜色已重置为默认蓝色', 'success');
   }
 
-  setPresetColor(color) {
+  async setPresetColor(color) {
     const customColorInput = document.getElementById('customColor');
     const customColorValue = document.getElementById('customColorValue');
     
@@ -667,20 +739,88 @@ class OptionsManager {
       customColorValue.textContent = color;
     }
     
-    // 自动应用预设颜色
-    this.settings.customColor = color;
-    this.settings.theme = 'custom';
-    
-    this.saveSettings();
-    this.updateThemeSelection();
-    
-    // 通知content script应用自定义颜色
-    chrome.runtime.sendMessage({
-      action: 'applyCustomColor',
-      color: color
-    });
-    
-    this.showStatus(`已应用预设颜色: ${color}`, 'success');
+    try {
+      // 自动应用预设颜色
+      this.settings.customColor = color;
+      this.settings.theme = 'custom';
+      
+      await this.saveSettings();
+      this.updateThemeSelection();
+      
+      // 通知所有标签页应用自定义颜色
+      const tabs = await chrome.tabs.query({});
+      let successCount = 0;
+      
+      // 并行发送消息到所有标签页，添加超时处理
+      const promises = tabs.map(async (tab) => {
+        try {
+          // 添加消息超时处理
+          const response = await Promise.race([
+            chrome.tabs.sendMessage(tab.id, {
+              action: 'applyCustomColor',
+              color: color
+            }),
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('消息超时')), 3000)
+            )
+          ]);
+          
+          if (response && response.success) {
+            successCount++;
+          } else {
+            console.warn(`标签页 ${tab.id} 应用预设颜色失败:`, response?.error || '未知错误');
+          }
+        } catch (error) {
+          console.warn(`标签页 ${tab.id} 消息发送失败:`, error.message);
+          
+          // 如果是特定页面类型，跳过重试
+          if (error.message.includes('Could not establish connection') || 
+              error.message.includes('scripted') ||
+              error.message.includes('extensions')) {
+            return;
+          }
+          
+          // 尝试注入content script后重试
+          try {
+            await chrome.scripting.executeScript({
+              target: { tabId: tab.id },
+              files: ['content.js']
+            });
+            
+            // 重试发送消息，添加超时
+            const retryResponse = await Promise.race([
+              chrome.tabs.sendMessage(tab.id, {
+                action: 'applyCustomColor',
+                color: color
+              }),
+              new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('重试消息超时')), 2000)
+              )
+            ]);
+            
+            if (retryResponse && retryResponse.success) {
+              successCount++;
+            } else {
+              console.warn(`标签页 ${tab.id} 重试后仍失败:`, retryResponse?.error);
+            }
+          } catch (retryError) {
+            console.warn(`标签页 ${tab.id} 重试失败:`, retryError.message);
+          }
+        }
+      });
+      
+      await Promise.allSettled(promises);
+      
+      if (successCount > 0) {
+        this.showStatus(`已应用预设颜色: ${color} (成功: ${successCount}个标签页)`, 'success');
+      } else {
+        this.showStatus('应用预设颜色失败，请刷新页面后重试', 'error');
+      }
+      
+    } catch (error) {
+      console.error('应用预设颜色失败:', error);
+      this.showStatus('设置保存失败，请重试', 'error');
+    }
   }
 
   bindCustomColorEvents() {
