@@ -8,6 +8,9 @@ class FloatingNavigation {
     this.isPopupOpen = false; // 跟踪popup状态
     this.hideTimer = null; // 延迟隐藏计时器
     this.isManuallyHidden = false; // 跟踪用户是否手动隐藏
+    this.showTimer = null; // 延迟显示计时器
+    this.lastStateChangeTime = 0; // 防抖：记录最后状态变化时间
+    this.stateChangeLock = false; // 状态变化锁，防止频繁切换
     // 设置合理的默认位置
     const defaultX = Math.max(100, window.innerWidth - 80);
     const defaultY = Math.max(100, window.innerHeight - 80);
@@ -161,8 +164,10 @@ class FloatingNavigation {
     
     // 设置初始位置，确保在屏幕范围内
     const adjustedPosition = this.adjustPositionToScreen(this.settings.position);
-    this.container.style.left = adjustedPosition.x + 'px';
-    this.container.style.top = adjustedPosition.y + 'px';
+    // adjustedPosition 是中心点坐标，需要转换为左上角坐标
+    const mainButtonSize = 56 * (this.settings.buttonSize / 100);
+    this.container.style.left = (adjustedPosition.x - mainButtonSize / 2) + 'px';
+    this.container.style.top = (adjustedPosition.y - mainButtonSize / 2) + 'px';
     
     console.log('📍 设置位置:', adjustedPosition);
     console.log('📏 按钮大小:', this.settings.buttonSize + '%');
@@ -261,12 +266,11 @@ class FloatingNavigation {
       // 设置按钮位置（圆形均匀分布）
       const angle = (index * (360 / enabledButtons.length)) - 90; // 均匀分布，从顶部开始
       
-      // 根据按钮大小百分比调整半径
-      // 基础半径为70，根据百分比调整（50%-120%对应半径45-95）
-      const baseRadius = 70;
-      const sizePercent = this.settings.buttonSize / 100;
-      const radius = Math.round(baseRadius * sizePercent);
-      console.log('🔘 计算半径:', radius, '基于大小:', this.settings.buttonSize + '%');
+      // 动态计算最佳半径 - 根据主按钮大小和菜单按钮数量智能调整
+      const radius = this.calculateOptimalRadius(enabledButtons.length);
+      console.log('🔘 智能计算半径:', radius, 
+                  '基于按钮数量:', enabledButtons.length, 
+                  '按钮大小:', this.settings.buttonSize + '%');
       
       const radian = (angle * Math.PI) / 180;
       const x = Math.cos(radian) * radius;
@@ -281,6 +285,71 @@ class FloatingNavigation {
     });
     
     console.log('🎯 创建的功能按钮数量:', enabledButtons.length);
+  }
+
+  // 智能计算最佳半径 - 根据主按钮大小和菜单按钮数量动态调整
+  calculateOptimalRadius(buttonCount) {
+    // 获取当前按钮大小百分比
+    const sizePercent = this.settings.buttonSize / 100;
+    
+    // 主按钮的基础尺寸（56px是CSS中定义的主按钮基础大小）
+    const mainButtonBaseSize = 56;
+    const currentMainButtonSize = mainButtonBaseSize * sizePercent;
+    
+    // 功能按钮的基础尺寸（50px是CSS中定义的功能按钮基础大小）
+    const functionButtonBaseSize = 50;
+    const currentFunctionButtonSize = functionButtonBaseSize * sizePercent;
+    
+    // 计算基础间距：主按钮半径 + 功能按钮半径 + 美观间距
+    const mainRadius = currentMainButtonSize / 2;
+    const functionRadius = currentFunctionButtonSize / 2;
+    const aestheticGap = Math.max(15, currentMainButtonSize * 0.2); // 美观间距，最少15px
+    
+    // 基础半径 = 主按钮半径 + 功能按钮半径 + 美观间距
+    let baseRadius = mainRadius + functionRadius + aestheticGap;
+    
+    // 根据按钮数量调整 - 按钮越多，需要更大的半径避免重叠
+    let densityFactor = 1;
+    if (buttonCount <= 4) {
+      densityFactor = 0.9; // 按钮少时可以更紧凑
+    } else if (buttonCount <= 6) {
+      densityFactor = 1.0; // 正常间距
+    } else if (buttonCount <= 8) {
+      densityFactor = 1.1; // 按钮多时稍微扩大
+    } else {
+      densityFactor = 1.2; // 按钮很多时需要更大间距
+    }
+    
+    // 应用密度系数
+    baseRadius *= densityFactor;
+    
+    // 考虑按钮间的最小角度间隔，确保不会太拥挤
+    const anglePerButton = 360 / buttonCount;
+    const minAngleForComfort = 35; // 最小35度间隔比较舒适
+    
+    if (anglePerButton < minAngleForComfort) {
+      // 如果角度太小，需要增大半径
+      const radiusMultiplier = minAngleForComfort / anglePerButton;
+      baseRadius *= Math.min(radiusMultiplier, 1.5); // 最多增大1.5倍
+    }
+    
+    // 最终半径限制在合理范围内
+    const minRadius = 45; // 最小半径
+    const maxRadius = 120; // 最大半径
+    const finalRadius = Math.round(Math.max(minRadius, Math.min(maxRadius, baseRadius)));
+    
+    console.log('📐 半径计算详情:', {
+      按钮数量: buttonCount,
+      尺寸百分比: Math.round(sizePercent * 100) + '%',
+      主按钮大小: Math.round(currentMainButtonSize) + 'px',
+      功能按钮大小: Math.round(currentFunctionButtonSize) + 'px',
+      美观间距: Math.round(aestheticGap) + 'px',
+      密度系数: densityFactor,
+      基础半径: Math.round(baseRadius) + 'px',
+      最终半径: finalRadius + 'px'
+    });
+    
+    return finalRadius;
   }
 
   // 重新创建功能按钮（用于设置更改时动态更新）
@@ -409,13 +478,20 @@ class FloatingNavigation {
     this.lastMouseCheck = 0;
     this.lastRectUpdate = 0;
     this.cachedMainButtonRect = null;
+    this.lastMousePosition = { x: 0, y: 0 }; // 跟踪鼠标位置
     this.globalMouseMoveHandler = (e) => {
       if (this.isDragging) return;
       
-      // 节流：每20ms检查一次，提高响应精度
+      // 更新鼠标位置
+      this.lastMousePosition = { x: e.clientX, y: e.clientY };
+      
+      // 节流：每30ms检查一次（稍微增加间隔，减少频繁检查）
       const now = Date.now();
-      if (now - this.lastMouseCheck < 20) return;
+      if (now - this.lastMouseCheck < 30) return;
       this.lastMouseCheck = now;
+      
+      // 防止频繁切换：如果正在状态变化锁定期，跳过
+      if (this.stateChangeLock) return;
       
       // 每100ms更新一次缓存的主按钮位置信息，减少频繁的DOM查询
       if (now - this.lastRectUpdate > 100) {
@@ -425,17 +501,23 @@ class FloatingNavigation {
       
       const isOverFloatingNav = this.isMouseOverFloatingNav(e.clientX, e.clientY);
       
-      // 添加状态变化检测，减少不必要的日志
+      // 添加状态变化检测，减少不必要的操作
       if (isOverFloatingNav !== this.lastHoverState) {
         this.lastHoverState = isOverFloatingNav;
+        this.lastStateChangeTime = now;
+        
+        // 设置短暂的状态变化锁，防止快速切换
+        this.stateChangeLock = true;
+        setTimeout(() => { this.stateChangeLock = false; }, 50);
+        
         console.log('🖱️ 鼠标状态变化:', isOverFloatingNav ? '进入悬浮导航区域' : '离开悬浮导航区域');
-      }
-      
-      if (isOverFloatingNav) {
-        this.clearHideTimer();
-        this.showButtons();
-      } else if (this.container.classList.contains('expanded')) {
-        this.scheduleHideButtons();
+        
+        if (isOverFloatingNav) {
+          this.clearHideTimer();
+          this.showButtons();
+        } else if (this.container.classList.contains('expanded')) {
+          this.scheduleHideButtons();
+        }
       }
     };
     
@@ -484,9 +566,9 @@ class FloatingNavigation {
     const mainButtonRect = this.cachedMainButtonRect || this.mainButton?.getBoundingClientRect();
     if (!mainButtonRect) return false;
     
-    // 动态计算边距容错，基于按钮大小
+    // 动态计算边距容错，基于按钮大小，增加稳定性
     const buttonSize = Math.max(mainButtonRect.width, mainButtonRect.height);
-    const dynamicMargin = Math.max(15, buttonSize * 0.2); // 最少15px或按钮大小的20%
+    const dynamicMargin = Math.max(20, buttonSize * 0.25); // 最少20px或按钮大小的25%，增加容错
     
     // 检查主按钮区域 - 使用主按钮的实际位置而不是容器位置
     const expandedMainButtonRect = {
@@ -506,15 +588,30 @@ class FloatingNavigation {
       return true;
     }
     
-    // 如果菜单展开，检查功能按钮区域
+    // 如果菜单展开，使用智能检测整个菜单区域
     if (this.container.classList.contains('expanded')) {
+      // 获取启用的按钮数量，用于计算当前的菜单半径
+      const enabledButtons = Object.entries(this.settings.enabledButtons)
+        .filter(([key, enabled]) => enabled);
+      const menuRadius = this.calculateOptimalRadius(enabledButtons.length);
+      
+      // 检测整个菜单圆形区域（包含所有功能按钮）
+      const menuMargin = Math.max(25, buttonSize * 0.3); // 菜单区域的容错边界
+      const totalMenuRadius = menuRadius + (buttonSize * 0.4) + menuMargin; // 菜单半径 + 功能按钮半径 + 容错
+      
+      const menuDistance = Math.sqrt(Math.pow(mouseX - centerX, 2) + Math.pow(mouseY - centerY, 2));
+      
+      if (menuDistance <= totalMenuRadius) {
+        return true;
+      }
+      
+      // 备用检测：逐个检查功能按钮（防止边缘情况）
       const buttons = this.buttonGroup.querySelectorAll('.floating-nav-button');
       for (const button of buttons) {
         const buttonRect = button.getBoundingClientRect();
         const functionButtonSize = Math.max(buttonRect.width, buttonRect.height);
-        const functionMargin = Math.max(12, functionButtonSize * 0.15); // 功能按钮稍小的容错
+        const functionMargin = Math.max(15, functionButtonSize * 0.2);
         
-        // 同样使用圆形检测功能按钮
         const btnCenterX = (buttonRect.left + buttonRect.right) / 2;
         const btnCenterY = (buttonRect.top + buttonRect.bottom) / 2;
         const btnRadius = functionButtonSize / 2 + functionMargin;
@@ -535,6 +632,10 @@ class FloatingNavigation {
       clearTimeout(this.hideTimer);
       this.hideTimer = null;
     }
+    if (this.showTimer) {
+      clearTimeout(this.showTimer);
+      this.showTimer = null;
+    }
   }
   
   // 重置位置缓存（在按钮移动后调用）
@@ -545,11 +646,20 @@ class FloatingNavigation {
   
   // 安排延迟隐藏菜单
   scheduleHideButtons() {
+    // 防抖处理：如果刚刚有状态变化，延迟更长时间
+    const now = Date.now();
+    const timeSinceLastChange = now - this.lastStateChangeTime;
+    const delay = timeSinceLastChange < 300 ? 100 : 60; // 如果最近有变化，延迟更长时间
+    
     this.clearHideTimer();
     this.hideTimer = setTimeout(() => {
-      this.hideButtons();
+      // 二次确认鼠标确实离开了悬浮导航区域
+      const currentMousePos = this.lastMousePosition;
+      if (currentMousePos && !this.isMouseOverFloatingNav(currentMousePos.x, currentMousePos.y)) {
+        this.hideButtons();
+      }
       this.hideTimer = null;
-    }, 20); // 50ms延迟，快速响应鼠标移出
+    }, delay);
   }
 
   startDrag(e) {
@@ -586,21 +696,35 @@ class FloatingNavigation {
       const newX = e.clientX - this.dragOffset.x;
       const newY = e.clientY - this.dragOffset.y;
       
-      // 边界检查
-      const maxX = window.innerWidth - this.container.offsetWidth;
-      const maxY = window.innerHeight - this.container.offsetHeight;
+      // 计算主按钮中心位置（用于智能边界检查）
+      const centerX = newX + (this.container.offsetWidth / 2);
+      const centerY = newY + (this.container.offsetHeight / 2);
       
-      const constrainedX = Math.max(0, Math.min(newX, maxX));
-      const constrainedY = Math.max(0, Math.min(newY, maxY));
+      // 使用智能边界约束，考虑菜单展开范围
+      const sizePercent = this.settings.buttonSize / 100;
+      const enabledButtons = Object.entries(this.settings.enabledButtons)
+        .filter(([key, enabled]) => enabled);
+      const menuRadius = this.calculateOptimalRadius(enabledButtons.length);
+      const functionButtonSize = 50 * sizePercent;
+      const totalRadius = menuRadius + (functionButtonSize / 2);
+      const safeMargin = totalRadius + 10;
+      
+      // 约束主按钮中心位置
+      const constrainedCenterX = Math.max(safeMargin, Math.min(centerX, window.innerWidth - safeMargin));
+      const constrainedCenterY = Math.max(safeMargin, Math.min(centerY, window.innerHeight - safeMargin));
+      
+      // 转换回左上角坐标
+      const constrainedX = constrainedCenterX - (this.container.offsetWidth / 2);
+      const constrainedY = constrainedCenterY - (this.container.offsetHeight / 2);
       
       // 直接设置位置，提高响应速度
       this.container.style.left = constrainedX + 'px';
       this.container.style.top = constrainedY + 'px';
       
-      // 更新设置中的位置（实时更新，避免丢失）
+      // 更新设置中的位置（实时更新，避免丢失）- 保存中心点坐标
       this.settings.position = {
-        x: constrainedX,
-        y: constrainedY
+        x: constrainedCenterX,
+        y: constrainedCenterY
       };
     };
 
@@ -654,6 +778,9 @@ class FloatingNavigation {
       return;
     }
     
+    // 更新状态变化时间
+    this.lastStateChangeTime = Date.now();
+    
     this.buttonGroup.style.display = 'block';
     this.container.classList.add('expanded');
     
@@ -677,6 +804,9 @@ class FloatingNavigation {
       return;
     }
     
+    // 更新状态变化时间
+    this.lastStateChangeTime = Date.now();
+    
     console.log('📱 隐藏菜单按钮');
     
     const buttons = this.buttonGroup.querySelectorAll('.floating-nav-button');
@@ -695,6 +825,8 @@ class FloatingNavigation {
     
     // 清除定时器
     this.clearHideTimer();
+    // 清除状态变化锁的定时器
+    this.stateChangeLock = false;
     
     // 移除全局事件监听器
     if (this.globalMouseMoveHandler) {
@@ -708,18 +840,45 @@ class FloatingNavigation {
   }
 
   adjustPositionToScreen(position) {
-    // 确保位置在屏幕范围内
-    const containerWidth = 56; // 主按钮宽度
-    const containerHeight = 56; // 主按钮高度
+    // 动态计算安全边界 - 考虑展开菜单的完整范围
+    const sizePercent = this.settings.buttonSize / 100;
+    const mainButtonSize = 56 * sizePercent; // 主按钮实际大小
     
-    const maxX = window.innerWidth - containerWidth - 20; // 留20px边距
-    const maxY = window.innerHeight - containerHeight - 20; // 留20px边距
+    // 获取启用的按钮数量
+    const enabledButtons = Object.entries(this.settings.enabledButtons)
+      .filter(([key, enabled]) => enabled);
     
-    const adjustedX = Math.max(20, Math.min(position.x, maxX));
-    const adjustedY = Math.max(20, Math.min(position.y, maxY));
+    // 计算菜单展开时的总半径
+    const menuRadius = this.calculateOptimalRadius(enabledButtons.length);
+    const functionButtonSize = 50 * sizePercent; // 功能按钮实际大小
+    const totalRadius = menuRadius + (functionButtonSize / 2); // 从中心到功能按钮外边缘的距离
+    
+    // 安全边距：总半径 + 额外缓冲
+    const safeMargin = totalRadius + 10; // 额外10px缓冲
+    
+    console.log('🛡️ 安全边界计算:', {
+      '按钮数量': enabledButtons.length,
+      '主按钮大小': Math.round(mainButtonSize) + 'px',
+      '菜单半径': menuRadius + 'px',
+      '功能按钮大小': Math.round(functionButtonSize) + 'px',
+      '总半径': Math.round(totalRadius) + 'px',
+      '安全边距': Math.round(safeMargin) + 'px'
+    });
+    
+    // 计算允许的位置范围（考虑主按钮是中心点）
+    const minX = safeMargin;
+    const maxX = window.innerWidth - safeMargin;
+    const minY = safeMargin;
+    const maxY = window.innerHeight - safeMargin;
+    
+    const adjustedX = Math.max(minX, Math.min(position.x, maxX));
+    const adjustedY = Math.max(minY, Math.min(position.y, maxY));
     
     // 如果位置被调整了，保存新位置
     if (adjustedX !== position.x || adjustedY !== position.y) {
+      console.log('📍 位置已调整:', 
+        `从 (${position.x}, ${position.y})`, 
+        `到 (${adjustedX}, ${adjustedY})`);
       this.settings.position = { x: adjustedX, y: adjustedY };
       this.saveSettings();
     }
@@ -728,18 +887,22 @@ class FloatingNavigation {
   }
 
   adjustPosition() {
+    // 使用智能边界调整，而不是简单的容器大小
     const rect = this.container.getBoundingClientRect();
-    const maxX = window.innerWidth - rect.width;
-    const maxY = window.innerHeight - rect.height;
+    const centerX = rect.left + (rect.width / 2);
+    const centerY = rect.top + (rect.height / 2);
     
-    let newX = Math.min(rect.left, maxX);
-    let newY = Math.min(rect.top, maxY);
+    // 重新使用智能安全边界计算
+    const adjustedPosition = this.adjustPositionToScreen({ x: centerX, y: centerY });
     
-    if (newX !== rect.left || newY !== rect.top) {
-      this.container.style.left = newX + 'px';
-      this.container.style.top = newY + 'px';
-      this.settings.position = { x: newX, y: newY };
+    // 应用调整后的位置
+    if (adjustedPosition.x !== centerX || adjustedPosition.y !== centerY) {
+      this.container.style.left = adjustedPosition.x - (rect.width / 2) + 'px';
+      this.container.style.top = adjustedPosition.y - (rect.height / 2) + 'px';
+      this.settings.position = { x: adjustedPosition.x, y: adjustedPosition.y };
       this.saveSettings();
+      
+      console.log('🔧 智能调整位置:', adjustedPosition);
     }
   }
 
@@ -1005,9 +1168,14 @@ class FloatingNavigation {
   // 更新悬浮按钮位置
   updatePosition() {
     if (this.container && this.settings.position) {
-      this.container.style.left = `${this.settings.position.x}px`;
-      this.container.style.top = `${this.settings.position.y}px`;
-      console.log('📍 位置已更新到:', this.settings.position);
+      // settings.position 存储的是中心点坐标，需要转换为左上角坐标
+      const mainButtonSize = 56 * (this.settings.buttonSize / 100);
+      const leftPos = this.settings.position.x - (mainButtonSize / 2);
+      const topPos = this.settings.position.y - (mainButtonSize / 2);
+      
+      this.container.style.left = `${leftPos}px`;
+      this.container.style.top = `${topPos}px`;
+      console.log('📍 位置已更新到:', this.settings.position, '(中心点坐标)');
     }
   }
 
