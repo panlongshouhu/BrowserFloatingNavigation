@@ -34,8 +34,8 @@
 
 1. **下载源码**
    ```bash
-   git clone https://github.com/your-username/floating-navigation.git
-   cd floating-navigation
+   git clone https://github.com/panlongshouhu/BrowserFloatingNavigation.git
+   cd BrowserFloatingNavigation
    ```
 
 2. **准备图标文件**
@@ -53,9 +53,6 @@
    - 点击"加载已解压的扩展程序"
    - 选择项目文件夹
 
-### 方法二：Chrome应用商店（即将上线）
-敬请期待在Chrome Web Store正式发布！
-
 ## 📖 使用指南
 
 ### 基础操作
@@ -64,10 +61,6 @@
 3. **拖拽移动** - 长按主按钮可拖拽到任意位置
 4. **功能使用** - 点击对应功能按钮执行操作
 
-### 快捷键
-- `Ctrl+Shift+F` - 切换导航显示/隐藏
-- `Ctrl+Home` - 快速回到页面顶部
-- `Ctrl+End` - 快速到达页面底部
 
 ### 设置配置
 - **右键扩展图标** → 选项 → 打开设置页面
@@ -146,9 +139,9 @@
 
 如果您在使用过程中遇到任何问题，请通过以下方式反馈：
 
-- 📧 邮件：your-email@example.com
-- 🐙 GitHub Issues：[提交问题](https://github.com/your-repo/issues)
-- 💬 用户群：加入QQ群 123456789
+- 📧 邮件：panlongshouhu@gmail.com
+- 🐙 GitHub Issues：[提交问题](https://github.com/panlongshouhu/BrowserFloatingNavigation/issues)
+- 💬 用户群：加入QQ群 980534694
 
 ## 📄 开源协议
 
